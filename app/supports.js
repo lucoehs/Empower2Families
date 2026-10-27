@@ -1,37 +1,41 @@
-// Supports.js
+// This is the supports page. Users can add thing that support them so they can 
+//  keep track of the things that keep them going and motivated. 
 
+// external imports
 import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View} from 'react-native';
-import {MenuProvider} from 'react-native-popup-menu';
 import {MaterialCommunityIcons} from '@expo/vector-icons';
+import {useSQLiteContext} from "expo-sqlite";
+
+// internal imports
 import AddButton from '@/components/AddButton';
 import ListItem from '@/components/ListItem';
 import {COLORS} from '@/constants/Colors';
-import {useSQLiteContext} from "expo-sqlite";
+
 
 const Supports = () => {
+
     const db = useSQLiteContext();
-    const [isModalVisible, setModalVisible] = useState(false);
-    const [editModalVisible, setEditModalVisible] = useState(false); // New state for edit modal
-    const [supportText, setSupportText] = useState('');
-    const [editedSupportText, setEditedSupportText] = useState(''); // New state for edited support text
-    const [editingSupportId, setEditingSupportId] = useState(null); // New state for tracking the support being edited
-    const [supports, setSupports] = useState([]);
+
+    // Variables to track and set states of various things such as element visibility or an array of items
     const [isLoading, setIsLoading] = useState(true);
+    const [isAddModalVisible, setAddModalVisible] = useState(false);
+    const [isEditModalVisible, setEditModalVisible] = useState(false); 
+
+    const [supports, setSupports] = useState([]);
+
+    const [editingSupportId, setEditingSupportId] = useState(null); 
+    const [supportText, setSupportText] = useState('');
+    const [editedSupportText, setEditedSupportText] = useState(''); 
     const [errorMessage, setErrorMessage] = useState('');
 
-
     const emptyMessage = "You don’t have any supports added yet, click the blue plus sign to add one!";
-
-    const toggleModal = () => {
-        setModalVisible(!isModalVisible);
-    };
 
     const addSupport = async () => {
         try {
             if (supportText.length > 0) {
                 await db.runAsync('INSERT INTO supports (text, date) VALUES (?, ?);', supportText, Date.now())
-                toggleModal(); // Close the modal after adding
+                toggleAddModal(); // Close the modal after adding
 
                 getSupports();
             } else {
@@ -50,14 +54,14 @@ const Supports = () => {
 
     const getSupports = async () => {
         setIsLoading(true);
-
+    
         try {
-            db.getAllAsync("SELECT * FROM supports;").then(r => {
-                setSupports(r.map((s, index) => ({
-                    id: s.id,
-                    text: s.text,
+            db.getAllAsync("SELECT * FROM supports;").then(entries => {
+                setSupports(entries.map((support, index) => ({
+                    id: support.id,
+                    text: support.text,
                     // Assuming you want to display the accomplishment timestamp as well
-                    timestamp: s.date,
+                    timestamp: support.date,
                 })));
             })
         } catch (error) {
@@ -79,7 +83,7 @@ const Supports = () => {
     const editSupport = async (id) => {
         try {
             db.getFirstAsync("SELECT * FROM supports WHERE id = ?", id).then(async (r) => {
-                await openEditModal(id, r.text);
+                await toggleEditModal(id, r.text);
             }, reason => console.warn(reason))
         } catch (error) {
             console.error(error);
@@ -94,7 +98,7 @@ const Supports = () => {
                 await db.runAsync("UPDATE supports SET text = ? WHERE id = ?;", editedSupportText, editingSupportId)
 
                 // Close the edit modal
-                closeEditModal();
+                toggleEditModal(editingSupportId, editedSupportText);
 
                 // Refresh the stressors array
                 getSupports()
@@ -107,16 +111,26 @@ const Supports = () => {
     };
 
 
-    const openEditModal = (id, text) => {
-        setEditedSupportText(text);
-        setEditingSupportId(id);
-        setEditModalVisible(true);
-    };
+    // const openEditModal = (id, text) => {
+    //     setEditedSupportText(text);
+    //     setEditingSupportId(id);
+    //     setEditModalVisible(true);
+    // };
 
-    const closeEditModal = () => {
-        setEditedSupportText('');
-        setEditingSupportId(null);
-        setEditModalVisible(false);
+    // const closeEditModal = () => {
+    //     setEditedSupportText('');
+    //     setEditingSupportId(null);
+    //     setEditModalVisible(false);
+    // };
+
+    const toggleEditModal = (id = null, text = '') => {
+        setEditingSupportId(id);
+        setEditedSupportText(text);
+        setEditModalVisible(!isEditModalVisible);
+    }
+
+    const toggleAddModal = () => {
+        setAddModalVisible(!isAddModalVisible);
     };
 
     useEffect(() => {
@@ -125,80 +139,85 @@ const Supports = () => {
 
 
     return (
-        <MenuProvider>
-            <View style={styles.overCon}>
-                <ScrollView style={styles.scrollContainer}>
-                    <View style={styles.container}>
-                        <Text style={styles.title}>Supports</Text>
-                        {isLoading ? (
-                            <ActivityIndicator size="large" color={COLORS.primaryColor}/>
-                        ) : supports.length === 0 ? (
-                            <View style={styles.emptyMessageConatiner}>
-                                <Text style={styles.emptyMessage}>{emptyMessage}</Text>
-                            </View>
-                        ) : (
-                            supports.map((support) => (
-                                <ListItem key={support.id} text={support.text} onDelete={deleteSupport} id={support.id}
-                                          onEdit={editSupport}/>
-                            ))
-                        )}
-                    </View>
-                </ScrollView>
-                <AddButton onPress={toggleModal}/>
-                <Modal visible={isModalVisible} transparent animationType="fade">
-                    <View style={styles.modalContainer}>
-                        {errorMessage !== '' && (
-                            <Text style={styles.errorText}>{errorMessage}</Text>
-                        )}
-                        <View style={styles.modalContent}>
-                            <TouchableOpacity style={styles.closeButton} onPress={toggleModal}>
-                                <MaterialCommunityIcons name="close" size={20} color="#000"/>
-                            </TouchableOpacity>
+        <View style={styles.bodyContainer}>
+            <ScrollView style={styles.scrollContainer}>
+                <View style={styles.mainContentContainer}>
+                    <Text style={styles.title}>Supports</Text>
+                    {isLoading ? (
+                        <ActivityIndicator size="large" color={COLORS.primaryColor}/>
+                    ) : supports.length === 0 ? (
+                        <View style={styles.emptyMessageContainer}>
+                            <Text style={styles.emptyMessage}>{emptyMessage}</Text>
+                        </View>
+                    ) : (
+                        supports.map((support) => (
+                            <ListItem text={support.text} onDelete={deleteSupport}
+                                        id={support.id} onEdit={editSupport}/>
+                        ))
+                    )}
+                </View>
+            </ScrollView>
 
-                            <Text style={styles.modalTitle}>Add Support</Text>
-                            <Text style={styles.info}>A support can be things that are goind good, or things that make
-                                you stronger/better!</Text>
-                            <TextInput
-                                style={styles.modalInput}
-                                placeholder="Enter your support here ..."
-                                onChangeText={(text) => setSupportText(text)}
-                            />
-                            <TouchableOpacity style={styles.button} onPress={addSupport}>
-                                <Text style={styles.buttonText}>Add Support</Text>
-                            </TouchableOpacity>
-                        </View>
+            <AddButton onPress={toggleAddModal}/>
+
+            {/* How the add modal will appear */}
+            <Modal visible={isAddModalVisible} transparent animationType="fade">
+                <View style={styles.addModalContainer}>
+                    {errorMessage !== '' && (
+                        <Text style={styles.errorText}>{errorMessage}</Text>
+                    )}
+                    <View style={styles.addModalContent}>
+                        <TouchableOpacity style={styles.closeButton} onPress={toggleAddModal}>
+                            <MaterialCommunityIcons name="close" size={20} color="#000"/>
+                        </TouchableOpacity>
+
+                        <Text style={styles.modalTitle}>Add Support</Text>
+                        <Text style={styles.info}>A support can be things that are going good, or things that make
+                            you stronger/better!</Text>
+                        <TextInput
+                            style={styles.modalInput}
+                            placeholder="Enter your support here ..."
+                            placeholderTextColor={COLORS.placeholderText}
+                            onChangeText={(text) => setSupportText(text)}
+                        />
+                        <TouchableOpacity style={styles.button} onPress={addSupport}>
+                            <Text style={styles.buttonText}>Add Support</Text>
+                        </TouchableOpacity>
                     </View>
-                </Modal>
-                <Modal visible={editModalVisible} transparent animationType="fade">
-                    <View style={styles.modalContainer}>
-                        <View style={styles.modalContent}>
-                            <TouchableOpacity style={styles.closeButton} onPress={closeEditModal}>
-                                <MaterialCommunityIcons name="close" size={20} color="#000"/>
-                            </TouchableOpacity>
-                            <Text style={styles.modalTitle}>Edit Support</Text>
-                            <TextInput
-                                style={styles.modalInput}
-                                placeholder="Enter your edited support here ..."
-                                onChangeText={(text) => setEditedSupportText(text)}
-                                value={editedSupportText}
-                            />
-                            <TouchableOpacity style={styles.button} onPress={saveEditedSupport}>
-                                <Text style={styles.buttonText}>Save</Text>
-                            </TouchableOpacity>
-                        </View>
+                </View>
+            </Modal>
+
+            {/* How the edit modal will appear */}
+            <Modal visible={isEditModalVisible} transparent animationType="fade">
+                <View style={styles.addModalContainer}>
+                    <View style={styles.addModalContent}>
+                        <TouchableOpacity style={styles.closeButton} >
+                            <MaterialCommunityIcons name="close" size={20} color="#000"/>
+                        </TouchableOpacity>
+                        <Text style={styles.modalTitle}>Edit Support</Text>
+                        <TextInput
+                            style={styles.modalInput}
+                            placeholder="Enter your edited support here ..."
+                            placeholderTextColor={COLORS.placeholderText}
+                            onChangeText={(text) => setEditedSupportText(text)}
+                            value={editedSupportText}
+                        />
+                        <TouchableOpacity style={styles.button} onPress={saveEditedSupport}>
+                            <Text style={styles.buttonText}>Save</Text>
+                        </TouchableOpacity>
                     </View>
-                </Modal>
-            </View>
-        </MenuProvider>
+                </View>
+            </Modal>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
-    overCon: {
-        height: '100%',
+    bodyContainer: {
+        flexGrow: 1,
         backgroundColor: 'white'
     },
-    container: {
+    mainContentContainer: {
         flex: 1,
         backgroundColor: 'white',
         paddingHorizontal: 40,
@@ -214,13 +233,13 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         width: 'auto',
     },
-    modalContainer: {
+    addModalContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent black background
     },
-    modalContent: {
+    addModalContent: {
         backgroundColor: 'white',
         padding: 40,
         borderRadius: 10,
@@ -241,7 +260,8 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         paddingHorizontal: 10,
         marginBottom: 20,
-        fontSize: 12
+        fontSize: 12,
+        color: 'black'
     },
     button: {
         alignItems: 'center',
@@ -250,13 +270,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: 32,
         borderRadius: 5,
         backgroundColor: COLORS.primaryColor,
-        elevation: 5,
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 2,
-            height: 4,
-        },
-        shadowOpacity: 0.2,
+        elevation: 5, // For Android shadow
+        shadowColor: "#000", // For iOS shadow
+        shadowOffset: { width: 2, height: 4, }, // For iOS shadow
+        shadowOpacity: 0.2, // For iOS shadow
         shadowRadius: 10,
         height: 60,
         width: 180
@@ -271,7 +288,6 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         fontSize: 12
     },
-    // Style for the 'X' button
     closeButton: {
         position: 'absolute',
         top: 10,
@@ -281,7 +297,6 @@ const styles = StyleSheet.create({
         borderRadius: 50,
         zIndex: 1,
     },
-
     closeButtonText: {
         fontSize: 18,
         fontWeight: 'bold',
@@ -302,13 +317,13 @@ const styles = StyleSheet.create({
         fontSize: 20,
         textAlign: 'center',
         color: 'grey',
-        marginTop: '60%',
         width: '60%'
     },
-    emptyMessageConatiner: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+    emptyMessageContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: '60%',
     }
 });
 

@@ -12,6 +12,7 @@ web-build/
 
 # Native
 *.orig.*
+/credentials
 *.jks
 *.p8
 *.p12

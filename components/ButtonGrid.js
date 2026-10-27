@@ -1,6 +1,12 @@
+// Button grid component. Used to arrange muliple navigation buttons. Currently used
+//  on the start/home screen.
+
+// external imports
 import {View, Text, StyleSheet} from "react-native";
 
+// internal imports
 import SmallNavButton from "@/components/SmallNavButton";
+
 
 export default function ButtonGrid({text, buttonInfo}) {
     return (

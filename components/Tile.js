@@ -1,7 +1,14 @@
+// Tile component. Used with the recent achievement component. Each tile is what the recent
+//  achievement is displayed on.
+
+// external imports
 import {format} from 'date-fns'; // Import date-fns for formatting timestamps
 import React from 'react';
 import {Dimensions, StyleSheet, Text, TouchableOpacity} from 'react-native';
+
+// internal imports
 import {COLORS} from '@/constants/Colors';
+
 
 const Tile = ({text, onPress, timestamp}) => {
     const containerWidth = Dimensions.get('window').width;
@@ -30,13 +37,10 @@ const smallButtonStyles = StyleSheet.create({
         marginVertical: 10,
         height: 80,
         justifyContent: 'space-between',
-        elevation: 5,
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 2,
-            height: 4,
-        },
-        shadowOpacity: 0.2,
+        elevation: 5, // For Android shadow
+        shadowColor: "#000", // For iOS shadow
+        shadowOffset: { width: 2, height: 4, }, // For iOS shadow
+        shadowOpacity: 0.2, // For iOS shadow
         shadowRadius: 10,
     },
     buttonText: {

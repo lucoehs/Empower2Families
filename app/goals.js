@@ -1,24 +1,33 @@
-// Goals.js
+// This is the goals page. Users can set goals and later mark them as completed. 
+//  completed goals are stored as acheivements. 
+
+// external imports
 import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View} from 'react-native';
-import {Menu, MenuProvider, MenuOption, MenuOptions, MenuTrigger} from 'react-native-popup-menu';
-import AddButton from '@/components/AddButton';
-import {COLORS} from '@/constants/Colors';
+import {Menu, MenuOption, MenuOptions, MenuTrigger} from 'react-native-popup-menu';
 import {MaterialCommunityIcons} from "@expo/vector-icons";
 import {useSQLiteContext} from "expo-sqlite";
 
+// internal imports
+import AddButton from '@/components/AddButton';
+import {COLORS} from '@/constants/Colors';
+
+
 export default function Goals() {
+
   const db = useSQLiteContext()
 
-  const [goals, setGoals] = useState([]);
+  // Variables to track and set states of various things such as element visibility or an array of items
   const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [editModalVisible, setEditModalVisible] = useState(false); 
   const [isModalVisible, setModalVisible] = useState(false);
 
+  const [goals, setGoals] = useState([]);
+
+  const [errorMessage, setErrorMessage] = useState('');
   const [goalText, setGoalText] = useState('');
-  const [editModalVisible, setEditModalVisible] = useState(false); // New state for edit modal
-  const [editedGoalText, setEditedGoalText] = useState(''); // New state for edited support text
-  const [editingGoalId, setEditingGoalId] = useState(null); // New state for tracking the support being edited
+  const [editedGoalText, setEditedGoalText] = useState(''); 
+  const [editingGoalId, setEditingGoalId] = useState(null); 
 
   const emptyMessage = "You don’t have any goals added yet, click the blue plus sign to add one!";
 
@@ -49,8 +58,8 @@ export default function Goals() {
   const getGoals = async () => {
     setIsLoading(true);
     try {
-      db.getAllAsync("SELECT * FROM goals;").then(r => {
-        setGoals(r.map((goals, index) => ({
+      db.getAllAsync("SELECT * FROM goals;").then(entries => {
+        setGoals(entries.map((goals, index) => ({
           id: goals.id,
           text: goals.text,
           met: goals.met ? 'T' : 'F'
@@ -140,67 +149,69 @@ export default function Goals() {
   };
 
   return (
-    <MenuProvider>
-      <View style={styles.overCon}>
-        <ScrollView style={styles.scrollContainer}>
-          <View style={styles.container}>
-            <Text style={styles.title}>Goals</Text>
-            {isLoading ? (
-              <ActivityIndicator size="large" color={COLORS.primaryColor}/>
-            ) : goals.length === 0 ? (
-              <View style={styles.emptyMessageConatiner}>
-                <Text style={styles.emptyMessage}>{emptyMessage}</Text>
-              </View>
-            ) : (goals.map((goal) => (
-              <Goal key={goal.id} text={goal.text} met={goal.met} id={goal.id} onDelete={deleteGoal} onEdit={editGoals}
-                    onMet={setGoalToMet}/>)))}
-          </View>
-        </ScrollView>
-        <AddButton onPress={toggleModal}/>
-        <Modal visible={isModalVisible} transparent animationType="fade">
-          <View style={styles.modalContainer}>
-            {errorMessage !== '' && (
-              <Text style={styles.errorText}>{errorMessage}</Text>
-            )}
-            <View style={styles.modalContent}>
-              <TouchableOpacity style={styles.closeButton} onPress={toggleModal}>
-                <MaterialCommunityIcons name="close" size={20} color="#000"/>
-              </TouchableOpacity>
+    <View style={styles.bodyContainer}>
+      <ScrollView style={styles.scrollContainer}>
+        <View style={styles.mainContentContainer}>
+          <Text style={styles.title}>Goals</Text>
+          {isLoading ? (
+            <ActivityIndicator size="large" color={COLORS.primaryColor}/>
+          ) : goals.length === 0 ? (
+            <View style={styles.emptyMessageContainer}>
+              <Text style={styles.emptyMessage}>{emptyMessage}</Text>
+            </View>
+          ) : (goals.map((goal) => (
+            <Goal key={goal.id} text={goal.text} met={goal.met} id={goal.id} onDelete={deleteGoal} onEdit={editGoals}
+                  onMet={setGoalToMet}/>)))}
+        </View>
+      </ScrollView>
 
-              <Text style={styles.modalTitle}>Add Goal</Text>
-              <Text style={styles.info}>Set any goals you have here and when you achieve it, mark it as met!</Text>
-              <TextInput
-                style={styles.modalInput}
-                placeholder="Enter your goal here ..."
-                onChangeText={(text) => setGoalText(text)}
-              />
-              <TouchableOpacity style={styles.button} onPress={addGoal}>
-                <Text style={styles.buttonText}>Add Goal</Text>
-              </TouchableOpacity>
-            </View>
+      <AddButton onPress={toggleModal}/>
+      
+      <Modal visible={isModalVisible} transparent animationType="fade">
+        <View style={styles.modalContainer}>
+          {errorMessage !== '' && (
+            <Text style={styles.errorText}>{errorMessage}</Text>
+          )}
+          <View style={styles.modalContent}>
+            <TouchableOpacity style={styles.closeButton} onPress={toggleModal}>
+              <MaterialCommunityIcons name="close" size={20} color="#000"/>
+            </TouchableOpacity>
+
+            <Text style={styles.modalTitle}>Add Goal</Text>
+            <Text style={styles.info}>Set any goals you have here and when you achieve it, mark it as met!</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Enter your goal here ..."
+              placeholderTextColor={COLORS.placeholderText}
+              onChangeText={(text) => setGoalText(text)}
+            />
+            <TouchableOpacity style={styles.button} onPress={addGoal}>
+              <Text style={styles.buttonText}>Add Goal</Text>
+            </TouchableOpacity>
           </View>
-        </Modal>
-        <Modal visible={editModalVisible} transparent animationType="fade">
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <TouchableOpacity style={styles.closeButton} onPress={closeEditModal}>
-                <MaterialCommunityIcons name="close" size={20} color="#000"/>
-              </TouchableOpacity>
-              <Text style={styles.modalTitle}>Edit Support</Text>
-              <TextInput
-                style={styles.modalInput}
-                placeholder="Enter your edited support here ..."
-                onChangeText={(text) => setEditedGoalText(text)}
-                value={editedGoalText}
-              />
-              <TouchableOpacity style={styles.button} onPress={saveEditedGoal}>
-                <Text style={styles.buttonText}>Save</Text>
-              </TouchableOpacity>
-            </View>
+        </View>
+      </Modal>
+      <Modal visible={editModalVisible} transparent animationType="fade">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity style={styles.closeButton} onPress={closeEditModal}>
+              <MaterialCommunityIcons name="close" size={20} color="#000"/>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Edit Support</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Enter your edited goal here ..."
+              placeholderTextColor={COLORS.placeholderText}
+              onChangeText={(text) => setEditedGoalText(text)}
+              value={editedGoalText}
+            />
+            <TouchableOpacity style={styles.button} onPress={saveEditedGoal}>
+              <Text style={styles.buttonText}>Save</Text>
+            </TouchableOpacity>
           </View>
-        </Modal>
-      </View>
-    </MenuProvider>
+        </View>
+      </Modal>
+    </View>
   );
 }
 
@@ -208,14 +219,14 @@ export default function Goals() {
 function Goal({text, met, id, onDelete, onEdit, onMet}) {
 
   return (
-    <View style={listItemStyles.container}>
+    <View style={listItemStyles.contentContainer}>
       <View style={listItemStyles.goalItems}>
         <Text style={listItemStyles.goalText}>{text}</Text>
         {met === 'T' ? <MaterialCommunityIcons name="check-circle-outline" size={30} color="#90EE90"/> : <></>}
       </View>
       <Menu>
         <MenuTrigger><MaterialCommunityIcons name="dots-vertical" size={30} color="grey"/></MenuTrigger>
-        <MenuOptions style={listItemStyles.menu}>
+        <MenuOptions customStyles={{}} style={listItemStyles.menu}>
           <MenuOption onSelect={() => onEdit(id)} text='Edit'/>
           <MenuOption onSelect={() => onDelete(id)}>
             <Text style={{color: 'red'}}>Delete</Text>
@@ -228,7 +239,7 @@ function Goal({text, met, id, onDelete, onEdit, onMet}) {
 }
 
 const listItemStyles = StyleSheet.create({
-  container: {
+  contentContainer: {
     backgroundColor: 'white',
     borderRadius: 5,
     flexDirection: 'row',
@@ -236,13 +247,10 @@ const listItemStyles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     marginVertical: 10,
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 2,
-      height: 4,
-    },
-    shadowOpacity: 0.2,
+    elevation: 5, // For Android shadow
+    shadowColor: "#000", // For iOS shadow
+    shadowOffset: { width: 2, height: 4, }, // For iOS shadow
+    shadowOpacity: 0.2, // For iOS shadow
     shadowRadius: 10,
   },
   goalText: {
@@ -255,13 +263,10 @@ const listItemStyles = StyleSheet.create({
     right: -20,
     top: -80,
     padding: 10,
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 2,
-      height: 4,
-    },
-    shadowOpacity: 0.2,
+    elevation: 5, // For Android shadow
+    shadowColor: "#000", // For iOS shadow
+    shadowOffset: { width: 2, height: 4, }, // For iOS shadow
+    shadowOpacity: 0.2, // For iOS shadow
     shadowRadius: 10,
   },
   goalItems: {
@@ -273,11 +278,11 @@ const listItemStyles = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
-  overCon: {
-    height: '100%',
+  bodyContainer: {
+    flexGrow: 1,
     backgroundColor: 'white'
   },
-  container: {
+  mainContentContainer: {
     flex: 1,
     backgroundColor: 'white',
     paddingHorizontal: 40,
@@ -328,13 +333,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     borderRadius: 5,
     backgroundColor: COLORS.primaryColor,
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 2,
-      height: 4,
-    },
-    shadowOpacity: 0.2,
+    elevation: 5, // For Android shadow
+    shadowColor: "#000", // For iOS shadow
+    shadowOffset: { width: 2, height: 4, }, // For iOS shadow
+    shadowOpacity: 0.2, // For iOS shadow
     shadowRadius: 10,
     height: 60,
     width: 180
@@ -349,7 +351,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     fontSize: 12
   },
-  // Style for the 'X' button
   closeButton: {
     position: 'absolute',
     top: 10,
@@ -380,12 +381,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     textAlign: 'center',
     color: 'grey',
-    marginTop: '60%',
     width: '60%'
   },
-  emptyMessageConatiner: {
+  emptyMessageContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: '60%',
   }
 });

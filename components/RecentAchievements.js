@@ -1,7 +1,14 @@
+// Recent achievement component. Displays recently completed acheivements on the 
+//  start/home page. 
+
+// external imports
 import React, {useEffect, useState} from 'react';
 import {StyleSheet, Text, View} from 'react-native';
-import Tile from '@/components/Tile';
 import {useSQLiteContext} from "expo-sqlite";
+
+// internal imports
+import Tile from '@/components/Tile';
+
 
 const RecentAchievements = () => {
     const db = useSQLiteContext();
@@ -12,8 +19,8 @@ const RecentAchievements = () => {
     const fetchAchievements = async () => {
         let achievements = [];
         try {
-            const r = db.getAllSync("SELECT * FROM achievements ORDER BY date DESC;")
-            achievements = r.map((goals, index) => ({
+            const entries = db.getAllSync("SELECT * FROM achievements ORDER BY date DESC;")
+            achievements = entries.map((goals, index) => ({
                 id: goals.id,
                 text: goals.text,
                 timestamp: goals.date,

@@ -1,9 +1,13 @@
-// AddButton.js
+// Add button component. Currently used to toggle modal to add stressors, supports, etc.
 
+// external imports
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import { COLORS } from '@/constants/Colors';
+import { StyleSheet, Pressable, TouchableOpacity, View } from 'react-native';
 import {MaterialCommunityIcons} from "@expo/vector-icons";
+
+// internal imports
+import { COLORS } from '@/constants/Colors';
+
 
 export default function AddButton ({ onPress }) {
   return (
@@ -18,8 +22,8 @@ export default function AddButton ({ onPress }) {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 30, // Adjust as needed
-    right: 30, // Adjust as needed
+    bottom: 60, // Adjust as needed
+    right: 20, // Adjust as needed
   },
   button: {
     width: 60,

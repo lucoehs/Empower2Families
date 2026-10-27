@@ -1,10 +1,19 @@
- import React, { useState } from 'react';
+// This is the resources page. Users can view different links and resources available
+//  to them. Currently it is read-only and the users cannot add their own resources. 
+
+// external imports
+import React, { useState } from 'react';
 import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons'; // Importing MaterialCommunityIcons icon library
-import ResourceLink from '../components/ResourceLink';
-import { COLORS } from '../constants/Colors';
+
+// internal imports
+import ResourceLink from '@/components/ResourceLink';
+import { COLORS } from '@/constants/Colors';
+
 
 const Resources = ({ navigation }) => {
+  
+  // Variables to track and set states of various things such as element visibility or an array of items
   const [expandedSections, setExpandedSections] = useState({});
 
   // Function to toggle the expansion state of a section
@@ -21,12 +30,12 @@ const Resources = ({ navigation }) => {
   );
 
   return (
-    <ScrollView style={styles.overcon}>
-      <View style={styles.container}>
+    <ScrollView style={styles.bodyContainer}>
+      <View style={styles.mainContentContainer}>
         <View style={styles.category}>
           <TouchableOpacity onPress={() => toggleSection('Early Intervention Services/Parent Education')}>
             <View style={styles.titleContainer}>
-              <Text style={styles.topTitle}>Early Intervention Services/Parent Education</Text>
+              <Text style={styles.categoryTitle}>Early Intervention Services/Parent Education</Text>
               {renderExpandIcon('Early Intervention Services/Parent Education')}
             </View>
           </TouchableOpacity>
@@ -41,7 +50,7 @@ const Resources = ({ navigation }) => {
         <View style={styles.category}>
           <TouchableOpacity onPress={() => toggleSection('Parent Support Groups')}>
             <View style={styles.titleContainer}>
-              <Text style={styles.topTitle}>Parent Support Groups</Text>
+              <Text style={styles.categoryTitle}>Parent Support Groups</Text>
               {renderExpandIcon('Parent Support Groups')}
             </View>
           </TouchableOpacity>
@@ -56,7 +65,7 @@ const Resources = ({ navigation }) => {
         <View style={styles.category}>
           <TouchableOpacity onPress={() => toggleSection('Respite Care')}>
             <View style={styles.titleContainer}>
-              <Text style={styles.topTitle}>Respite Care</Text>
+              <Text style={styles.categoryTitle}>Respite Care</Text>
               {renderExpandIcon('Respite Care')}
             </View>
           </TouchableOpacity>
@@ -71,7 +80,7 @@ const Resources = ({ navigation }) => {
         <View style={styles.category}>
           <TouchableOpacity onPress={() => toggleSection('Self Advocacy')}>
             <View style={styles.titleContainer}>
-              <Text style={styles.topTitle}>Self Advocacy</Text>
+              <Text style={styles.categoryTitle}>Self Advocacy</Text>
               {renderExpandIcon('Self Advocacy')}
             </View>
           </TouchableOpacity>
@@ -86,7 +95,7 @@ const Resources = ({ navigation }) => {
         <View style={styles.category}>
           <TouchableOpacity onPress={() => toggleSection('Inclusion Services')}>
             <View style={styles.titleContainer}>
-              <Text style={styles.topTitle}>Inclusion Services</Text>
+              <Text style={styles.categoryTitle}>Inclusion Services</Text>
               {renderExpandIcon('Inclusion Services')}
             </View>
           </TouchableOpacity>
@@ -102,7 +111,11 @@ const Resources = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  bodyContainer: {
+    height: '100%',
+    backgroundColor: 'white'
+  },
+  mainContentContainer: {
     flex: 1,
     flexDirection: 'column',
     paddingHorizontal: 40,
@@ -110,9 +123,9 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     backgroundColor: "white",
   },
-  overcon: {
-    height: '100%',
-    backgroundColor: 'white'
+  categoryTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
   },
   titleContainer: {
     flex: 1,
@@ -127,10 +140,6 @@ const styles = StyleSheet.create({
   category: {
     marginBottom: 30
   },
-  topTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-  }
 });
 
 export default Resources;

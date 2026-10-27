@@ -1,7 +1,12 @@
+// This is the start/home page of the app. When it opens this is what will show. It acts as a
+//  menu to be able to navigate to all other pages in the app. 
+
+// external imports
 import {ScrollView, StyleSheet, View} from 'react-native'
 import {useSQLiteContext} from "expo-sqlite";
 import {useDrizzleStudio} from "expo-drizzle-studio-plugin";
 
+// internal imports
 import {COLORS} from '@/constants/Colors'
 import SignInButton from "@/components/SignInButton";
 import WideNavButton from '@/components/WideNavButton'
@@ -17,9 +22,9 @@ export default function Home() {
 
   return (
     <ScrollView style={styles.scrollContainer}>
-      <View style={styles.container}>
+      <View style={styles.mainContentContainer}>
         <View style={styles.userContainer}>
-          <SignInButton/>
+          {/* <SignInButton/> */}
           <SmallNavButton text="Child Info" navTo="child-info"/>
         </View>
         <WideNavButton text="My Network" navTo="network"/>
@@ -51,7 +56,7 @@ const reflectionButtons = [
 ]
 
 const styles = StyleSheet.create({
-  container: {
+  mainContentContainer: {
     flex: 1,
     flexDirection: 'column',
     backgroundColor: COLORS.lightModeBG,
@@ -69,7 +74,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     width: 'auto',
   },
-
   SignInButton: {
     width: 10,
   }

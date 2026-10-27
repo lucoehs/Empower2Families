@@ -1,26 +1,34 @@
-// Supports.js
+// This is the stressors page. Users can added different things here that stress
+//  them so that they can keep track of them easier to address them better. 
 
+// external imports
 import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View} from 'react-native';
-import {MenuProvider} from 'react-native-popup-menu';
 import {MaterialCommunityIcons} from '@expo/vector-icons';
+import {useSQLiteContext} from "expo-sqlite";
+
+// internal imports
 import AddButton from '@/components/AddButton';
 import ListItem from '@/components/ListItem';
 import {COLORS} from '@/constants/Colors';
-import {useSQLiteContext} from "expo-sqlite";
+
 
 export default function Stressors() {
+
     const db = useSQLiteContext();
-    const [isModalVisible, setModalVisible] = useState(false);
-    const [editModalVisible, setEditModalVisible] = useState(false); // New state for edit modal
-    const [stressorText, setStressorText] = useState('');
-    const [editedStressorsText, setEditedStressorsText] = useState(''); // New state for edited support text
-    const [editingStressorId, setEditingStressorsId] = useState(null); // New state for tracking the support being edited
-    const [stressors, setStressors] = useState([]);
+
+    // Variables to track and set states of various things such as element visibility or an array of items
     const [isLoading, setIsLoading] = useState(true);
+    const [isModalVisible, setModalVisible] = useState(false);
+    const [editModalVisible, setEditModalVisible] = useState(false); 
+
+    const [stressors, setStressors] = useState([]);
+
+    const [editingStressorId, setEditingStressorsId] = useState(null); 
+    const [stressorText, setStressorText] = useState('');
+    const [editedStressorsText, setEditedStressorsText] = useState(''); 
     const [errorMessage, setErrorMessage] = useState('');
-
-
+    
     const emptyMessage = "You don’t have any stressors added yet, click the blue plus sign to add one!";
 
     const toggleModal = () => {
@@ -52,12 +60,12 @@ export default function Stressors() {
         setIsLoading(true);
 
         try {
-            db.getAllAsync("SELECT * FROM stressors;").then(r => {
-                setStressors(r.map((s, index) => ({
-                    id: s.id,
-                    text: s.text,
+            db.getAllAsync("SELECT * FROM stressors;").then(entries => {
+                setStressors(entries.map((stressor, index) => ({
+                    id: stressor.id,
+                    text: stressor.text,
                     // Assuming you want to display the accomplishment timestamp as well
-                    timestamp: s.date,
+                    timestamp: stressor.date,
                 })));
             })
         } catch (error) {
@@ -122,79 +130,79 @@ export default function Stressors() {
     }, []);
 
     return (
-        <MenuProvider>
-            <View style={styles.overCon}>
-                <ScrollView style={styles.scrollContainer}>
-                    <View style={styles.container}>
-                        <Text style={styles.title}>Stressors</Text>
-                        {isLoading ? (
-                            <ActivityIndicator size="large" color={COLORS.primaryColor}/>
-                        ) : stressors.length === 0 ? (
-                            <View style={styles.emptyMessageConatiner}>
-                                <Text style={styles.emptyMessage}>{emptyMessage}</Text>
-                            </View>
-                        ) : (
-                            stressors.map((stressors) => (
-                                <ListItem key={stressors.id} text={stressors.text} onDelete={deleteStressor}
-                                          id={stressors.id} onEdit={editStressor}/>
-                            ))
-                        )}
-                    </View>
-                </ScrollView>
-                <AddButton onPress={toggleModal}/>
-                <Modal visible={isModalVisible} transparent animationType="fade">
-                    <View style={styles.modalContainer}>
-                        {errorMessage !== '' && (
-                            <Text style={styles.errorText}>{errorMessage}</Text>
-                        )}
-                        <View style={styles.modalContent}>
-                            <TouchableOpacity style={styles.closeButton} onPress={toggleModal}>
-                                <MaterialCommunityIcons name="close" size={20} color="#000"/>
-                            </TouchableOpacity>
+        <View style={styles.bodyContainer}>
+            <ScrollView style={styles.scrollContainer}>
+                <View style={styles.mainContentContainer}>
+                    <Text style={styles.title}>Stressors</Text>
+                    {isLoading ? (
+                        <ActivityIndicator size="large" color={COLORS.primaryColor}/>
+                    ) : stressors.length === 0 ? (
+                        <View style={styles.emptyMessageContainer}>
+                            <Text style={styles.emptyMessage}>{emptyMessage}</Text>
+                        </View>
+                    ) : (
+                        stressors.map((stressor) => (
+                            <ListItem text={stressor.text} onDelete={deleteStressor}
+                                        id={stressor.id} onEdit={editStressor}/>
+                        ))
+                    )}
+                </View>
+            </ScrollView>
+            <AddButton onPress={toggleModal}/>
+            <Modal visible={isModalVisible} transparent animationType="fade">
+                <View style={styles.modalContainer}>
+                    {errorMessage !== '' && (
+                        <Text style={styles.errorText}>{errorMessage}</Text>
+                    )}
+                    <View style={styles.modalContent}>
+                        <TouchableOpacity style={styles.closeButton} onPress={toggleModal}>
+                            <MaterialCommunityIcons name="close" size={20} color="#000"/>
+                        </TouchableOpacity>
 
-                            <Text style={styles.modalTitle}>Add Stressor</Text>
-                            <Text style={styles.info}>A stressor can be anything that causes you strain or tension!</Text>
-                            <TextInput
-                                style={styles.modalInput}
-                                placeholder="Enter your stressor here ..."
-                                onChangeText={(text) => setStressorText(text)}
-                            />
-                            <TouchableOpacity style={styles.button} onPress={addStressor}>
-                                <Text style={styles.buttonText}>Add Stressor</Text>
-                            </TouchableOpacity>
-                        </View>
+                        <Text style={styles.modalTitle}>Add Stressor</Text>
+                        <Text style={styles.info}>A stressor can be anything that causes you strain or tension!</Text>
+                        <TextInput
+                            style={styles.modalInput}
+                            placeholder="Enter your stressor here ..."
+                            placeholderTextColor={COLORS.placeholderText}
+                            onChangeText={(text) => setStressorText(text)}
+                        />
+                        <TouchableOpacity style={styles.button} onPress={addStressor}>
+                            <Text style={styles.buttonText}>Add Stressor</Text>
+                        </TouchableOpacity>
                     </View>
-                </Modal>
-                <Modal visible={editModalVisible} transparent animationType="fade">
-                    <View style={styles.modalContainer}>
-                        <View style={styles.modalContent}>
-                            <TouchableOpacity style={styles.closeButton} onPress={closeEditModal}>
-                                <MaterialCommunityIcons name="close" size={20} color="#000"/>
-                            </TouchableOpacity>
-                            <Text style={styles.modalTitle}>Edit Stressor</Text>
-                            <TextInput
-                                style={styles.modalInput}
-                                placeholder="Enter your edited stressor here ..."
-                                onChangeText={(text) => setEditedStressorsText(text)}
-                                value={editedStressorsText}
-                            />
-                            <TouchableOpacity style={styles.button} onPress={saveEditedStressor}>
-                                <Text style={styles.buttonText}>Save</Text>
-                            </TouchableOpacity>
-                        </View>
+                </View>
+            </Modal>
+            <Modal visible={editModalVisible} transparent animationType="fade">
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <TouchableOpacity style={styles.closeButton} onPress={closeEditModal}>
+                            <MaterialCommunityIcons name="close" size={20} color="#000"/>
+                        </TouchableOpacity>
+                        <Text style={styles.modalTitle}>Edit Stressor</Text>
+                        <TextInput
+                            style={styles.modalInput}
+                            placeholder="Enter your edited stressor here ..."
+                            placeholderTextColor={COLORS.placeholderText}
+                            onChangeText={(text) => setEditedStressorsText(text)}
+                            value={editedStressorsText}
+                        />
+                        <TouchableOpacity style={styles.button} onPress={saveEditedStressor}>
+                            <Text style={styles.buttonText}>Save</Text>
+                        </TouchableOpacity>
                     </View>
-                </Modal>
-            </View>
-        </MenuProvider>
+                </View>
+            </Modal>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
-    overCon: {
-        height: '100%',
+    bodyContainer: {
+        flexGrow: 1,
         backgroundColor: 'white'
     },
-    container: {
+    mainContentContainer: {
         flex: 1,
         backgroundColor: 'white',
         paddingHorizontal: 40,
@@ -245,20 +253,17 @@ const styles = StyleSheet.create({
         paddingHorizontal: 32,
         borderRadius: 5,
         backgroundColor: COLORS.primaryColor,
-        elevation: 5,
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 2,
-            height: 4,
-        },
-        shadowOpacity: 0.2,
+        elevation: 5, // For Android shadow
+        shadowColor: "#000", // For iOS shadow
+        shadowOffset: { width: 2, height: 4, }, // For iOS shadow
+        shadowOpacity: 0.2, // For iOS shadow
         shadowRadius: 10,
         height: 60,
-        width: 180
+        width: 180,
     },
     buttonText: {
         color: COLORS.lightText,
-        fontWeight: 'bold'
+        fontWeight: 'bold',
     },
     info: {
         color: 'grey',
@@ -266,7 +271,6 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         fontSize: 12
     },
-    // Style for the 'X' button
     closeButton: {
         position: 'absolute',
         top: 10,
@@ -276,7 +280,6 @@ const styles = StyleSheet.create({
         borderRadius: 50,
         zIndex: 1,
     },
-
     closeButtonText: {
         fontSize: 18,
         fontWeight: 'bold',
@@ -297,12 +300,12 @@ const styles = StyleSheet.create({
         fontSize: 20,
         textAlign: 'center',
         color: 'grey',
-        marginTop: '60%',
         width: '60%'
     },
-    emptyMessageConatiner: {
+    emptyMessageContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        marginTop: '60%',
     }
 });

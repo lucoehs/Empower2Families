@@ -119,6 +119,7 @@ export async function addUpdateChildInfo(db, oldName, name, bday, bio) {
 }
 
 export async function addContact(db, name, phone, level) {
+    console.log("adding contact...." + name);
     if (name === null || name === "") {
         return null
     }

@@ -1,15 +1,22 @@
+// Edit button component. Used to toggle edit screen for element. Currently used only
+//  for editing the child info, the other added elements have their edit toggle's attached
+//  to a pop-up menu component. 
+
+// external imports
 import React from 'react';
-import {StyleSheet, Pressable, View} from 'react-native';
+import {StyleSheet, Pressable, View, TouchableOpacity} from 'react-native';
 import {MaterialCommunityIcons} from "@expo/vector-icons";
 
+// internal imports
 import {COLORS} from '@/constants/Colors';
+
 
 export default function EditButton({onPress}) {
     return (
         <View style={styles.container}>
-            <Pressable style={styles.button} onPress={onPress}>
+            <TouchableOpacity style={styles.button} onPress={onPress}>
                 <MaterialCommunityIcons name="pencil" size={30} color="#fff"/>
-            </Pressable>
+            </TouchableOpacity>
         </View>
     );
 };
@@ -17,8 +24,8 @@ export default function EditButton({onPress}) {
 const styles = StyleSheet.create({
     container: {
         position: 'absolute',
-        bottom: 30, // Adjust as needed
-        right: 30, // Adjust as needed
+        bottom: 60, // Adjust as needed
+        right: 20, // Adjust as needed
     },
     button: {
         width: 60,

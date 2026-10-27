@@ -1,21 +1,31 @@
-// Achievements.js
+// This is the achievements page. Users can add achievements they have
+//  accomplished, as well as view goals that were marked as completed on the goals page. 
+
+// external imports
 import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View} from 'react-native';
-import {MenuProvider} from 'react-native-popup-menu';
-import AddButton from '@/components/AddButton';
-import {COLORS} from '@/constants/Colors';
 import {useSQLiteContext} from "expo-sqlite";
 import {MaterialCommunityIcons} from "@expo/vector-icons";
 import {format} from 'date-fns'; // Import the date-fns library for formatting
 
+// internal imports
+import AddButton from '@/components/AddButton';
+import {COLORS} from '@/constants/Colors';
+
+
 export default function Achievements() {
+
     const db = useSQLiteContext();
-    const [isModalVisible, setModalVisible] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
+
+    // Variables to track and set states of various things such as element visibility or an array of items
     const [isLoading, setIsLoading] = useState(true);
-    const [achievements, setAchievments] = useState([]);
-    const [newAchievementText, setNewAchievementText] = useState(''); // State for the new achievement text
-    const [editModalVisible, setEditModalVisible] = useState(false); // New state for edit modal
+    const [isModalVisible, setModalVisible] = useState(false);
+    const [editModalVisible, setEditModalVisible] = useState(false);
+
+    const [achievements, setAchievments] = useState([]); 
+
+    const [errorMessage, setErrorMessage] = useState('');
+    const [newAchievementText, setNewAchievementText] = useState(''); 
 
     const emptyMessage = "You don’t have any goals added yet, click the blue plus sign to add one!";
 
@@ -27,8 +37,8 @@ export default function Achievements() {
         setIsLoading(true);
 
         try {
-            db.getAllAsync("SELECT * FROM achievements ORDER BY date DESC;").then(r => {
-                setAchievments(r.map((goals, index) => ({
+            db.getAllAsync("SELECT * FROM achievements ORDER BY date DESC;").then(entries => {
+                setAchievments(entries.map((goals, index) => ({
                     id: goals.id,
                     text: goals.text,
                     // Assuming you want to display the accomplishment timestamp as well
@@ -68,68 +78,67 @@ export default function Achievements() {
     }, []);
 
     return (
-        <MenuProvider>
-            <View style={styles.overCon}>
-                <ScrollView style={styles.scrollContainer}>
-                    <View style={styles.container}>
-                        <Text style={styles.title}>Achievements</Text>
-                        {isLoading ? (
-                            <ActivityIndicator size="large" color={COLORS.primaryColor}/>
-                        ) : achievements.length === 0 ? (
-                            <View style={styles.emptyMessageConatiner}>
-                                <Text style={styles.emptyMessage}>{emptyMessage}</Text>
-                            </View>
-                        ) : (
-                            achievements.map((achievement) => (
-                                <Achievement key={achievement.id} text={achievement.text}
-                                             timestamp={achievement.timestamp} id={achievement.id}/>
-                            ))
-                        )}
-                    </View>
-                </ScrollView>
-                <AddButton onPress={toggleModal}/>
-                <Modal visible={isModalVisible} transparent animationType="fade">
-                    <View style={styles.modalContainer}>
-                        {errorMessage !== '' && (
-                            <Text style={styles.errorText}>{errorMessage}</Text>
-                        )}
-                        <View style={styles.modalContent}>
-                            <TouchableOpacity style={styles.closeButton} onPress={toggleModal}>
-                                <MaterialCommunityIcons name="close" size={20} color="#000"/>
-                            </TouchableOpacity>
-                            <Text style={styles.modalTitle}>Add Achievement</Text>
-                            <Text style={styles.info}>Add your achievements here!</Text>
-                            <TextInput
-                                style={styles.modalInput}
-                                placeholder="Enter your achievement here ..."
-                                value={newAchievementText}
-                                onChangeText={setNewAchievementText} // Update the state with the new value
-                            />
-                            <TouchableOpacity style={styles.button} onPress={addAchievement}>
-                                <Text style={styles.buttonText}>Add Achievement</Text>
-                            </TouchableOpacity>
+        <View style={styles.bodyContainer}>
+            <ScrollView style={styles.scrollContainer}>
+                <View style={styles.container}>
+                    <Text style={styles.title}>Achievements</Text>
+                    {isLoading ? (
+                        <ActivityIndicator size="large" color={COLORS.primaryColor}/>
+                    ) : achievements.length === 0 ? (
+                        <View style={styles.emptyMessageConatiner}>
+                            <Text style={styles.emptyMessage}>{emptyMessage}</Text>
                         </View>
+                    ) : (
+                        achievements.map((achievement) => (
+                            <Achievement key={achievement.id} text={achievement.text}
+                                            timestamp={achievement.timestamp} id={achievement.id}/>
+                        ))
+                    )}
+                </View>
+            </ScrollView>
+            <AddButton onPress={toggleModal}/>
+            <Modal visible={isModalVisible} transparent animationType="fade">
+                <View style={styles.modalContainer}>
+                    {errorMessage !== '' && (
+                        <Text style={styles.errorText}>{errorMessage}</Text>
+                    )}
+                    <View style={styles.modalContent}>
+                        <TouchableOpacity style={styles.closeButton} onPress={toggleModal}>
+                            <MaterialCommunityIcons name="close" size={20} color="#000"/>
+                        </TouchableOpacity>
+                        <Text style={styles.modalTitle}>Add Achievement</Text>
+                        <Text style={styles.info}>Add your achievements here!</Text>
+                        <TextInput
+                            style={styles.modalInput}
+                            placeholder="Enter your achievement here ..."
+                            placeholderTextColor={COLORS.placeholderText}
+                            value={newAchievementText}
+                            onChangeText={setNewAchievementText} // Update the state with the new value
+                        />
+                        <TouchableOpacity style={styles.button} onPress={addAchievement}>
+                            <Text style={styles.buttonText}>Add Achievement</Text>
+                        </TouchableOpacity>
                     </View>
-                </Modal>
-                <Modal visible={editModalVisible} transparent animationType="fade">
-                    <View style={styles.modalContainer}>
-                        <View style={styles.modalContent}>
-                            <TouchableOpacity style={styles.closeButton}>
-                                <MaterialCommunityIcons name="close" size={20} color="#000"/>
-                            </TouchableOpacity>
-                            <Text style={styles.modalTitle}>Edit Support</Text>
-                            <TextInput
-                                style={styles.modalInput}
-                                placeholder="Enter your edited support here ..."
-                            />
-                            <TouchableOpacity style={styles.button}>
-                                <Text style={styles.buttonText}>Save</Text>
-                            </TouchableOpacity>
-                        </View>
+                </View>
+            </Modal>
+            <Modal visible={editModalVisible} transparent animationType="fade">
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <TouchableOpacity style={styles.closeButton}>
+                            <MaterialCommunityIcons name="close" size={20} color="#000"/>
+                        </TouchableOpacity>
+                        <Text style={styles.modalTitle}>Edit Support</Text>
+                        <TextInput
+                            style={styles.modalInput}
+                            placeholder="Enter your edited support here ..."
+                        />
+                        <TouchableOpacity style={styles.button}>
+                            <Text style={styles.buttonText}>Save</Text>
+                        </TouchableOpacity>
                     </View>
-                </Modal>
-            </View>
-        </MenuProvider>
+                </View>
+            </Modal>
+        </View>
     );
 };
 
@@ -140,10 +149,10 @@ function Achievement({text, timestamp}) {
 
     return (
         <View style={listItemStyles.container}>
-            <Text style={listItemStyles.goalText}>
+            <Text style={listItemStyles.achievementText}>
                 {text}
             </Text>
-            <View style={listItemStyles.time}>
+            <View style={listItemStyles.whenCompletedContainer}>
                 <Text style={listItemStyles.dateText}>{formattedDate}</Text>
                 <Text style={listItemStyles.timeText}>{formattedTime}</Text>
             </View>
@@ -160,22 +169,19 @@ const listItemStyles = StyleSheet.create({
         alignItems: 'center',
         padding: 20,
         marginVertical: 10,
-        elevation: 5,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 2,
-            height: 4,
-        },
-        shadowOpacity: 0.2,
+        elevation: 5, // For Android shadow
+        shadowColor: "#000", // For iOS shadow
+        shadowOffset: { width: 2, height: 4, }, // For iOS shadow
+        shadowOpacity: 0.2, // For iOS shadow
         shadowRadius: 10,
     },
-    goalText: {
+    achievementText: {
         fontSize: 15,
         fontWeight: 'bold',
         flexWrap: 'wrap',
-        width: '60%', // Adjust the width as needed
+        width: '60%', 
     },
-    time: {
+    whenCompletedContainer: {
         textAlign: 'right'
     },
     dateText: {
@@ -197,8 +203,8 @@ const listItemStyles = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
-    overCon: {
-        height: '100%',
+    bodyContainer: {
+        flexGrow: 1,
         backgroundColor: 'white'
     },
     container: {
@@ -243,7 +249,8 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         paddingHorizontal: 10,
         marginBottom: 20,
-        fontSize: 12
+        fontSize: 12,
+        color: "black"
     },
     button: {
         alignItems: 'center',
@@ -252,13 +259,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: 32,
         borderRadius: 5,
         backgroundColor: COLORS.primaryColor,
-        elevation: 5,
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 2,
-            height: 4,
-        },
-        shadowOpacity: 0.2,
+        elevation: 5, // For Android shadow
+        shadowColor: "#000", // For iOS shadow
+        shadowOffset: { width: 2, height: 4, }, // For iOS shadow
+        shadowOpacity: 0.2, // For iOS shadow
         shadowRadius: 10,
         height: 60,
         width: 180
@@ -273,7 +277,6 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         fontSize: 12
     },
-    // Style for the 'X' button
     closeButton: {
         position: 'absolute',
         top: 10,

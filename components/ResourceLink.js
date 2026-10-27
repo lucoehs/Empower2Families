@@ -1,7 +1,13 @@
+// Resource link component. Component to display resources on the resource page. 
+//  Each instance display the name, description, and link to the resource. 
+
+// external imports
 import React from 'react';
 import {Linking, StyleSheet, Text, View} from 'react-native';
 
+// internal imports
 import {COLORS} from '@/constants/Colors';
+
 
 const ResourceLink = ({name, description, website, phone, onPress}) => {
 
@@ -30,13 +36,10 @@ const wideButtonStyles = StyleSheet.create({
     borderRadius: 5,
     marginVertical: 10,
     justifyContent: 'center',
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 2,
-      height: 4,
-    },
-    shadowOpacity: 0.2,
+    elevation: 5, // For Android shadow
+    shadowColor: "#000", // For iOS shadow
+    shadowOffset: { width: 2, height: 4, }, // For iOS shadow
+    shadowOpacity: 0.2, // For iOS shadow
     shadowRadius: 10,
   },
   buttonText: {

@@ -1,9 +1,14 @@
+// Navigation bar component. The header component at the top of every page. 
+
+// external imports
 import React from "react"
 import {Pressable, StyleSheet, Text, View, Image} from "react-native"
 import {Link, router} from "expo-router"
 import {MaterialCommunityIcons} from "@expo/vector-icons";
 
+// internal imports
 import {COLORS} from "@/constants/Colors"
+
 
 // Component that contains the 'E2F' logo and home button
 // TODO style text component separate from logo
@@ -13,7 +18,7 @@ export default function Navbar() {
   <Link href="/" asChild>
   <Pressable>
     <View style={navStyles.navbarContainer}>
-      <Image source={require("assets/images/logo.png")} style={navStyles.image}/>
+      <Image source={require("../assets/images/logo.png")} style={navStyles.image}/>
       {!router.canGoBack() ? (
         <Text style={navStyles.logo}>{getGreeting()}</Text>
       ) : (

@@ -1,54 +1,67 @@
-import React, {useEffect, useState} from 'react'
-import {ScrollView, StyleSheet, Text, View, Modal, TouchableOpacity, TextInput, ActivityIndicator} from 'react-native'
-import * as Contacts from 'expo-contacts'
-import {Picker} from '@react-native-picker/picker'
-import * as Sms from 'expo-sms'
-import {useSQLiteContext} from 'expo-sqlite'
+// This is the network page. Users can select people from their contacts to add to their
+//  network list. Eventually they will be able to also message them a summary of the dat
+//  that they want to share. 
 
-import {COLORS} from '@/constants/Colors'
-import {MenuProvider} from 'react-native-popup-menu';
+// external imports
+import React, {useEffect, useState} from 'react'
+import {ScrollView, StyleSheet, Text, View, Modal, TouchableOpacity, TextInput} from 'react-native'
+import {Contact, requestPermissionsAsync, ContactField} from 'expo-contacts'
+import {Picker} from '@react-native-picker/picker'
+import * as SMS from 'expo-sms'
+import {useSQLiteContext} from 'expo-sqlite'
 import {Menu, MenuOption, MenuOptions, MenuTrigger} from 'react-native-popup-menu';
 import {MaterialCommunityIcons} from "@expo/vector-icons";
+
+// internal imports
+import NewMessageButton from '@/components/NewMessageButton';
 import {addContact} from "@/data/User";
 import {delContact} from "@/data/User";
+import AddButton from '@/components/AddButton';
+import {COLORS} from '@/constants/Colors'
 
-import { LogBox } from 'react-native';
-LogBox.ignoreLogs(['Warning: ...']); // Ignore log notification by message
-LogBox.ignoreAllLogs();//Ignore all log notifications
-
-
-//import NewMessageButton from '@/components/NewMessageButton';
 
 // Function to format phone number as (###) ###-####
 function formatPhoneNumber(phoneNumber) {
-    const cleaned = ('' + phoneNumber).replace(/\D/g, '');
-    const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
-    if (match) {
+    const cleaned = ('' + phoneNumber).replace(/\D/g, ''); // take all spaces out of the number
+    const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/); // check if the number is a standard number
+    if (match) { // if it is format it
         return '(' + match[1] + ') ' + match[2] + '-' + match[3];
     }
-    return null;
+    return phoneNumber; // otherwise just leave it alone
 }
 
+
 export default function Network() {
+
     const db = useSQLiteContext();
+
+    // Variables to track and set states of various things such as element visibility or an array of items
+    const [isLoading, setIsLoading] = useState(true);
+    const [isContactsListModalVisible, setContactsListModalVisible] = useState(false);
+    const [isAddModalVisible, setAddModalVisible] = useState(false);
+    const [isMessageModalVisible, setMessageModalVisible] = useState(false);
 
     const [contacts, setContacts] = useState([])
     const [filteredContacts, setFilteredContacts] = useState([])
-    const emptyMessage = "You don’t have any supports added yet, click the blue plus sign to add one!"
-
-    const [isAddModalVisible, setAddModalVisible] = useState(false);
-    const [isContactModalVisible, setContactModalVisible] = useState(false);
-    const [isMessageModalVisible, setMessageModalVisible] = useState(false);
-
-    const [searchQuery, setSearchQuery] = useState('');
-
     const [network, setNetwork] = useState([]);
+
     const [selectedTier, setSelectedTier] = useState(1);
     const [selectedContact, setSelectedContact] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const emptyMessage = "You don’t have any supports added yet, click the blue plus sign to add one!"
+
+    const toggleContactsListModal = () => {
+        setContactsListModalVisible(!isContactsListModalVisible);
+    };
+
+    const toggleAddModal = () => {
+        setAddModalVisible(!isAddModalVisible);
+    };
 
     const syncNetwork = async () => {
-        const rows = db.getAllAsync("SELECT * FROM contacts")
-        setNetwork((await rows).map((row, index) => ({
+        const entries = db.getAllAsync("SELECT * FROM contacts")
+        setNetwork((await entries).map((row, index) => ({
             id: index.toString(),
             name: row?.name,
             phone: row?.phone,
@@ -57,17 +70,18 @@ export default function Network() {
     }
 
     const addContactToNetwork = async () => {
-        let phone = selectedContact.phoneNumbers.length > 0 ? selectedContact.phoneNumbers[0].number : 'No Phone Number'
-        await addContact(db, selectedContact.name, phone, selectedTier)
+        let name = selectedContact.fullName
+        let phone = selectedContact.phones.length > 0 ? selectedContact.phones[0].number : 'No Phone Number'
+        await addContact(db, name, phone, selectedTier)
         setSelectedContact(null);
         setSelectedTier(1);
-        setAddModalVisible(false);
+        toggleAddModal();
         await syncNetwork();
     };
 
     const deleteContact = async (phone) => {
         try {
-            await delContact(db, selectedContact.name, phone, selectedTier)
+            await delContact(db, selectedContact.fullName, phone, selectedTier)
             await syncNetwork();
         } catch (error) {
             console.log(error);
@@ -77,14 +91,14 @@ export default function Network() {
     const getContacts = async () => {
         setIsLoading(true);
         try {
-            let phone = selectedContact.phoneNumbers.length > 0 ? selectedContact.phoneNumbers[0].number : 'No Phone Number'
+            let phone = selectedContact.phones.length > 0 ? selectedContact.phones[0].number : 'No Phone Number'
             await addContact(db, selectedContact.name, phone, selectedTier)
             setSelectedContact(null);
             setSelectedTier(1);
-            setAddModalVisible(false);
+            toggleAddModal()
             await syncNetwork();
         } catch (error) {
-            console.error('Error fetching stressors document:', error);
+            console.error('Error fetching network document:', error);
         } finally {
             setIsLoading(false);
         }
@@ -92,39 +106,53 @@ export default function Network() {
 
     useEffect(() => {
         (async () => {
-            const {status} = await Contacts.requestPermissionsAsync();
+            const {status} = await requestPermissionsAsync();
             if (status === 'granted') {
-                const {data} = await Contacts.getContactsAsync({
-                    fields: [Contacts.Fields.FirstName, Contacts.Fields.PhoneNumbers]
-                });
+                //const {data} = await Contact.getAllDetails(['givenName', 'phones']);
 
-                const formattedContacts = data.map(contact => ({
-                    ...contact,
-                    phoneNumbers: contact.phoneNumbers ? contact.phoneNumbers.map(phone => ({
-                        ...phone,
-                        number: formatPhoneNumber(phone.number.replace(/^\+?1?/, '')) // Remove +1 country code and leading 1
-                    })) : []
-                }));
-
-                setContacts(formattedContacts);
-                setFilteredContacts(formattedContacts);
+                // const {data} = await Contact.getAllDetails([ContactField.FULL_NAME, ContactField.PHONES], {
+                //     limit: 20,
+                //     offset: 10,
+                //     sortOrder: ContactsSortOrder.GivenName,
+                // });
+                const data = await Contact.getAllDetails([ContactField.FULL_NAME, ContactField.PHONES]); 
+                if (data != null)
+                {
+                    const formattedContacts = data.map(contact => ({
+                        ...contact,
+                        phones: contact.phones ? contact.phones.map(phone => ({
+                            ...phone,
+                            number: formatPhoneNumber(phone.number.replace(/^\+?1?/, '')) // Remove +1 country code and leading 1
+                        })) : []
+                    }));
+                    setContacts(formattedContacts);
+                    setFilteredContacts(formattedContacts);
+                }
+                else
+                {
+                    console.log("null");
+                }
             }
         })()
     }, []);
 
     useEffect(() => {
         const filtered = contacts.filter(contact =>
-            contact.name.toLowerCase().includes(searchQuery.toLowerCase())
+            contact.fullName.toLowerCase().includes(searchQuery.toLowerCase())
         );
         setFilteredContacts(filtered);
         syncNetwork();
     }, [searchQuery]);
 
 return (
-    <View style={styles.overContainer}>
+    <View style={styles.bodyContainer}>
+        {/* How the main content will appear */}
         <ScrollView style={styles.scrollContainer}>
-            <View style={styles.container}>
+            <View style={styles.mainContentContainer}>
+
                 <Text style={styles.title}>My Network</Text>
+
+                {/* Display contacts in network, if there none display the empty message */}
                 {network.length === 0 ? (
                     <View style={styles.emptyMessageContainer}>
                         <Text style={styles.emptyMessage}>{emptyMessage}</Text>
@@ -134,26 +162,29 @@ return (
                         const levelContacts = network.filter(contact => contact.level === index + 1);
                         return levelContacts.length > 0 ? (
                             <View key={index}>
-                                <Text style={styles.levelHeader}>
+
+                                <Text style={styles.tierHeader}>
                                     {index === 0 ? 'Immediate' : index === 1 ? 'Natural' : index === 2 ? 'Interest' : 'Community'}
                                 </Text>
+
                                 {levelContacts.map(contact => (
                                     <View key={contact.id} style={[styles.menuContainer, styles.contactDisplay]}>
-                                        <MenuProvider>
-                                            <Menu style={{ display: 'flex', flexDirection: 'row' }}>
-                                                <Text style={{ width: 225 }}>
-                                                    {contact.name} {contact.phone}
+                                        <View style={{ display: 'flex', flexDirection: 'row' }}>
+
+                                            <Text style={{ width: 225 }}>
+                                                {contact.name} {contact.phone}
+                                            </Text>
+
+                                            <TouchableOpacity onPress={() => {
+                                                setSelectedContact(contact);
+                                                deleteContact(contact.phone);
+                                            }}>
+                                                <Text style={{ color: 'gray', width: 50 }}>
+                                                    Delete
                                                 </Text>
-                                                <MenuOption onSelect={() => {
-                                                    setSelectedContact(contact);
-                                                    deleteContact(contact.phone);
-                                                }}>
-                                                    <Text style={{ color: 'gray', width: 50, top: -5 }}>
-                                                        Delete
-                                                    </Text>
-                                                </MenuOption>
-                                            </Menu>
-                                        </MenuProvider>
+                                            </TouchableOpacity>
+
+                                        </View>
                                     </View>
                                 ))}
                             </View>
@@ -163,67 +194,86 @@ return (
             </View>
         </ScrollView>
 
-        <AddButton onPress={() => setContactModalVisible(!isContactModalVisible)} />
+        {/* Opens the contact modal when you press the add button */}
+        <AddButton onPress={toggleContactsListModal}/>
 
-        <Modal visible={isContactModalVisible} transparent animationType="fade">
-            <View style={styles.modalContainer}>
-                <View style={styles.modalContent}>
+        {/* How contact list modal will appear */}
+        <Modal visible={isContactsListModalVisible} transparent animationType="fade">
+            <View style={styles.contactsModalContainer}>
+                <View style={styles.contactsModalContent}>
+
                     <TouchableOpacity
                         style={styles.closeButton}
-                        onPress={() => setContactModalVisible(!isContactModalVisible)}
+                        onPress={toggleContactsListModal}
                     >
                         <MaterialCommunityIcons name="close" size={20} color="#000" />
                     </TouchableOpacity>
+
                     <Text style={styles.modalTitle}>Add Contact</Text>
+
                     <TextInput
                         style={styles.searchInput}
                         placeholder="Search by name..."
+                        placeholderTextColor={COLORS.placeholderText}
                         value={searchQuery}
                         onChangeText={text => setSearchQuery(text)}
                     />
+
                     <ScrollView style={styles.scrollContainer}>
                         {filteredContacts.map((contact, index) => (
-                            <Contact
+                            <ContactCard
                                 key={index}
-                                name={contact.name}
-                                phone={contact.phoneNumbers && contact.phoneNumbers.length > 0
-                                    ? formatPhoneNumber(contact.phoneNumbers[0].number)
+                                name={contact.fullName}
+                                //name={contact.getDetails([ContactField.FULL_NAME])}
+
+                                phone={contact.phones && contact.phones.length > 0
+                                    ? //formatPhoneNumber(contact.phones[0].number) 
+                                    contact.phones[0].number
                                     : 'No Phone Number'}
+
                                 onPress={() => {
-                                    setAddModalVisible(!isAddModalVisible);
                                     setSelectedContact(contact);
-                                }}
+                                    toggleContactsListModal();
+                                    toggleAddModal();
+                                    }}
                             />
                         ))}
                     </ScrollView>
+
                 </View>
             </View>
         </Modal>
 
-        <Modal visible={isAddModalVisible} transparent animationType="fade">
+        {/* How the add modal will appear */}
+        <Modal visible={isAddModalVisible} transparent animationType="fade"> 
             <View style={styles.addModalContainer}>
                 <View style={styles.addModalContent}>
+
                     <TouchableOpacity
                         style={styles.closeButton}
-                        onPress={() => setAddModalVisible(!isAddModalVisible)}
+                        onPress={toggleAddModal}
                     >
                         <MaterialCommunityIcons name="close" size={20} color="#000" />
                     </TouchableOpacity>
+
                     <Text style={styles.modalTitle}>Add Contact</Text>
+
                     {selectedContact ? (
                         <View style={styles.selectedContactInfo}>
-                            <Text>{selectedContact.name}</Text>
-                            <Text style={styles.rightText}>
-                                {selectedContact.phoneNumbers && selectedContact.phoneNumbers.length > 0
-                                    ? formatPhoneNumber(selectedContact.phoneNumbers[0].number)
+                            <Text style={styles.selectedContactName}>{selectedContact.fullName}</Text>
+                            <Text style={styles.selectedContactNumber}>
+                                {selectedContact.phones && selectedContact.phones.length > 0
+                                    ? formatPhoneNumber(selectedContact.phones[0].number)
                                     : 'No Phone Number'}
                             </Text>
                         </View>
                     ) : null}
+
                     <Text style={styles.tierText}>Set Tier</Text>
+
                     <Picker
-                        selectedValue={selectedTier}
                         style={styles.picker}
+                        selectedValue={selectedTier}
                         onValueChange={(itemValue) => setSelectedTier(itemValue)}
                     >
                         <Picker.Item label="Immediate" value={1} />
@@ -231,12 +281,15 @@ return (
                         <Picker.Item label="Interest" value={3} />
                         <Picker.Item label="Community" value={4} />
                     </Picker>
-                    <TouchableOpacity style={styles.button} onPress={addContactToNetwork}>
+
+                    <TouchableOpacity style={styles.addToNetworkButton} onPress={addContactToNetwork}>
                         <Text style={styles.buttonText}>Add Contact</Text>
                     </TouchableOpacity>
+
                 </View>
             </View>
         </Modal>
+
     </View>
 );
 }
@@ -251,18 +304,8 @@ function NewMessageButton({onPress}) {
     )
 }
 
-function AddButton({onPress}) {
-    return (
-        <View style={styles.addContainer}>
-            <TouchableOpacity style={styles.addButton} onPress={onPress}>
-                <MaterialCommunityIcons name="plus" size={30} color="#fff"/>
-            </TouchableOpacity>
-        </View>
-    )
-}
 
-
-function Contact({name, phone, onPress}) {
+function ContactCard({name, phone, onPress}) {
     return (
         <TouchableOpacity onPress={onPress}>
             <View style={contactStyles.container}>
@@ -275,9 +318,10 @@ function Contact({name, phone, onPress}) {
     );
 }
 
+// Styles for the list of contacts in the contactsListModal
 const contactStyles = StyleSheet.create({
     container: {
-        width: '100%', // Take up full width
+        width: '100%', 
         paddingHorizontal: 20,
         paddingVertical: 10,
         borderBottomWidth: 1,
@@ -291,7 +335,7 @@ const contactStyles = StyleSheet.create({
     name: {
         fontSize: 15,
         fontWeight: 'bold',
-        marginBottom: 5,
+        marginBottom: 0,
     },
     phone: {
         fontSize: 13,
@@ -300,7 +344,11 @@ const contactStyles = StyleSheet.create({
 
 
 const styles = StyleSheet.create({
-    container: {
+    bodyContainer: {
+        flexGrow: 1,
+        backgroundColor: 'white'
+    },
+    mainContentContainer: {
         flex: 1,
         flexDirection: 'column',
         paddingHorizontal: 40,
@@ -309,43 +357,41 @@ const styles = StyleSheet.create({
         backgroundColor: "white",
         width: '100%',
     },
-    overContainer: {
-        height: '100%',
-        width: '100%',
-        backgroundColor: 'white'
-    },
     scrollContainer: {
         flexGrow: 1,
         width: '98%',
     },
     title: {
         fontSize: 20,
+        marginBottom: 15,
         fontWeight: 'bold',
     },
-    levelHeader: {
+    tierHeader: {
         fontSize: 16,
         fontWeight: 'bold',
         marginBottom: 5,
-        marginTop: 20
+        marginTop: 20,
     },
     contactDisplay: {
-        marginBottom: 5
+        marginBottom: 5,
     },
-    modalContainer: {
-        flex: 1,
+    contactsModalContainer: {
+        flexGrow: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent black background
-        width: '100%'
-    },
-    modalContent: {
         backgroundColor: 'white',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        width: '100%',
+    },
+    contactsModalContent: {
+        width: '90%',
+        height: '90%', 
         alignItems: 'center',
         justifyContent: 'space-between',
-        width: '100%',
-        height: '100%', // Adjusted to take up 90% of the screen height
-        paddingHorizontal: 20, // Added horizontal padding
-        paddingTop: 40, // Added top padding
+        backgroundColor: 'white',
+        paddingHorizontal: 20, 
+        paddingVertical: 40, 
+        borderRadius:20
     },
     closeButton: {
         position: 'absolute',
@@ -359,7 +405,6 @@ const styles = StyleSheet.create({
     modalTitle: {
         fontSize: 24,
         fontWeight: 'bold',
-        marginBottom: 10,
     },
     searchInput: {
         width: '90%',
@@ -374,21 +419,67 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent black background
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     addModalContent: {
+        height: '40%',
+        width: '90%',
         backgroundColor: 'white',
-        padding: 60,
         borderRadius: 10,
         alignItems: 'center',
         justifyContent: 'space-between',
-        width: '90%',
+        padding: 20
+    },
+    addToNetworkButton: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 32,
+        height: 60,
+        width: 180,
+        borderRadius: 5,
+        elevation: 5, // For Android shadow
+        shadowColor: "#000", // For iOS shadow
+        shadowOffset: { width: 2, height: 4, }, // For iOS shadow
+        shadowOpacity: 0.2, // For iOS shadow
+        shadowRadius: 10,
+        backgroundColor: COLORS.primaryColor
+    },
+    buttonText: {
+        fontSize: 20,
+        fontWeight: 'bold',
+    },
+    picker: {
+        width: 175,
+        height: 50,
+        backgroundColor: "#DDD",
+        color: "black",
+    },
+    selectedContactInfo: {
+        justifyItems: 'space-between',
+        alignItems: 'center',
+        backgroundColor: COLORS.primaryColor.toString() + '50', // adds opacity to primary color 
+        width: '80%',
+        borderRadius: 20,
+        padding: 10
+    },
+    selectedContactName: {
+        fontWeight: 'bold',
+        fontSize: 20,
+        marginBottom: 5
+    },
+    selectedContactNumber: {
+        fontStyle: 'italic'
+    },
+    tierText: {
+        fontSize: 20,
+        fontWeight: 'bold',
     },
     messageModalContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent black background
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     messageInput: {
         height: 150,
@@ -409,45 +500,10 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         width: '90%',
     },
-    button: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 32,
-        borderRadius: 5,
-        backgroundColor: COLORS.primaryColor,
-        elevation: 5,
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 2,
-            height: 4,
-        },
-        shadowOpacity: 0.2,
-        shadowRadius: 10,
-        height: 60,
-        width: 180
-    },
-    buttonText: {
-        fontSize: 20,
-        color: COLORS.lightText,
-        fontWeight: 'bold'
-    },
-    picker: {
-        width: 175,
-        height: 50,
-        marginBottom: 10,
-        borderWidth: 1,
-        borderColor: 'black', // You can set the color of the border here
-    },
-    tierText: {
-        marginTop: -60,
-        fontSize: 20,
-        fontWeight: 'bold',
-    },
     msgContainer: {
         position: 'absolute',
-        bottom: 100, // Adjust as needed
-        right: 30, // Adjust as needed
+        bottom: 100, 
+        right: 30, 
     },
     msgButton: {
         width: 60,
@@ -461,61 +517,43 @@ const styles = StyleSheet.create({
         shadowOffset: {width: 0, height: 2}, // For iOS shadow
         shadowOpacity: 0.8, // For iOS shadow
     },
-    addContainer: {
-        position: 'absolute',
-        bottom: 30, // Adjust as needed
-        right: 30, // Adjust as needed
-    },
-    addButton: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        backgroundColor: COLORS.primaryColor,
-        alignItems: 'center',
-        justifyContent: 'center',
-        elevation: 5, // For Android shadow
-        shadowColor: '#000', // For iOS shadow
-        shadowOffset: {width: 0, height: 2}, // For iOS shadow
-        shadowOpacity: 0.8, // For iOS shadow
-    },
-    rightText: {
-        textAlign: 'end',
-        display: 'block',
-        height: 100,
-    },
     menu: {
-            position: 'absolute',
-            backgroundColor: 'white',
-            right: -20,
-            top: -80,
-            padding: 10,
-            elevation: 5,
-            shadowColor: "#000",
-            shadowOffset: {
-                width: 2,
-                height: 4,
-            },
-            shadowOpacity: 0.2,
-            shadowRadius: 10,
-        },
+        position: 'absolute',
+        backgroundColor: 'white',
+        right: -20,
+        top: -80,
+        padding: 10,
+        elevation: 5, // For Android shadow
+        shadowColor: "#000", // For iOS shadow
+        shadowOffset: { width: 2, height: 4, }, // For iOS shadow
+        shadowOpacity: 0.2, // For iOS shadow
+        shadowRadius: 10,
+    },
     menuContainer: {
-            width: '100%',
-            backgroundColor: 'white',
-            borderRadius: 5,
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: 20,
-            marginVertical: 10,
-            elevation: 5,
-            shadowColor: "#000",
-            shadowOffset: {
-                width: 2,
-                height: 4,
-            },
-            shadowOpacity: 0.2,
-            shadowRadius: 10,
-        },
-    emptyMessage: undefined,
-    emptyMessageConatiner: undefined
+        width: '100%',
+        backgroundColor: 'white',
+        borderRadius: 5,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 20,
+        marginVertical: 10,
+        elevation: 5, // For Android shadow
+        shadowColor: "#000", // For iOS shadow
+        shadowOffset: { width: 2, height: 4, }, // For iOS shadow
+        shadowOpacity: 0.2, // For iOS shadow
+        shadowRadius: 10,
+    },
+    emptyMessage: {
+        fontSize: 20,
+        textAlign: 'center',
+        color: 'grey',
+        width: '60%'
+    },
+    emptyMessageContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: '60%',
+    }
 });

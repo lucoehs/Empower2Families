@@ -1,8 +1,14 @@
+// Wide navigation button  [full screen width] component. Used as a navigation button on the 
+//  start/home screen.
+
+// external imports
 import React from 'react';
 import {Pressable, StyleSheet, Text} from 'react-native';
 import {Link} from 'expo-router';
 
+// internal imports
 import {COLORS} from '@/constants/Colors';
+
 
 export default function WideNavButton({text, navTo}) {
   return (
@@ -22,13 +28,10 @@ const wideButtonStyles = StyleSheet.create({
     marginVertical: 10,
     justifyContent: 'flex-end',
     height: 85,
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 2,
-      height: 4,
-    },
-    shadowOpacity: 0.2,
+    elevation: 5, // For Android shadow
+    shadowColor: "#000", // For iOS shadow
+    shadowOffset: { width: 2, height: 4, }, // For iOS shadow
+    shadowOpacity: 0.2, // For iOS shadow
     shadowRadius: 10,
   },
   buttonText: {

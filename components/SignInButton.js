@@ -2,13 +2,13 @@
 //  See documentation for more details about how the sign-in feature will work.
 
 // external imports
-import React, {useState, useEffect, useMemo} from 'react'
-import {Pressable, View, Text, StyleSheet} from "react-native";
-import {CloudStorage, CloudStorageProvider} from "react-native-cloud-storage";
-import {MaterialCommunityIcons} from "@expo/vector-icons";
+import React, { useState, useEffect, useMemo } from "react";
+import { Pressable, View, Text, StyleSheet } from "react-native";
+import { CloudStorage, CloudStorageProvider } from "react-native-cloud-storage";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Google from "expo-auth-session/providers/google";
-import * as WebBrowser from 'expo-web-browser';
-import {Image} from "expo-image"
+import * as WebBrowser from "expo-web-browser";
+import { Image } from "expo-image";
 
 // internal imports
 // --

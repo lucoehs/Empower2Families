@@ -74,37 +74,37 @@ export default function Network() {
    };
 
    const syncNetwork = async () => {
-      const entries = database.getAllAsync("SELECT * FROM contacts");
+      const contacts = database.getAllAsync("SELECT * FROM contacts");
       setNetwork(
-         (await entries).map((row, index) => ({
-            contact_id: index.toString(),
-            name: row?.name,
-            phone: row?.phone,
-            level: row?.level,
+         (await contacts).map((contact) => ({
+            contact_id: contact.contact_id,
+            name: contact.name,
+            phone: contact.phone,
+            level: contact.level,
          })),
       );
    };
 
    const addContactToNetwork = async () => {
-      let name = selectedContact.fullName;
-      let phone =
+      const name = selectedContact.name;
+      const phone =
          selectedContact.phones.length > 0
             ? selectedContact.phones[0].number
             : "No Phone Number";
-      await addContact(database, name, phone, selectedTier);
+      console.log(name)
+      await addContactToDatabase(database, name, phone, selectedTier);
       setSelectedContact(null);
       setSelectedTier(1);
       toggleAddModal();
       await syncNetwork();
    };
 
-   const deleteContact = async (phone) => {
+   // called when delete button is pressed on a Contact Card
+   const deleteContact = async (contact_id) => {
       try {
-         await delContact(
+         await deleteContactFromDatabase(
             database,
-            selectedContact.fullName,
-            phone,
-            selectedTier,
+            contact_id
          );
          await syncNetwork();
       } catch (error) {
@@ -112,24 +112,63 @@ export default function Network() {
       }
    };
 
-   const getContacts = async () => {
-      setIsLoading(true);
-      try {
-         let phone =
-            selectedContact.phones.length > 0
-               ? selectedContact.phones[0].number
-               : "No Phone Number";
-         await addContact(database, selectedContact.name, phone, selectedTier);
-         setSelectedContact(null);
-         setSelectedTier(1);
-         toggleAddModal();
-         await syncNetwork();
-      } catch (error) {
-         console.error("Error fetching network document:", error);
-      } finally {
-         setIsLoading(false);
+   // was marked as not being used anywhere, everything seems to work fine, so I don't know
+   // exactly what this is for
+   // const getContacts = async () => {
+   //    setIsLoading(true);
+   //    try {
+   //       let phone =
+   //          selectedContact.phones.length > 0
+   //             ? selectedContact.phones[0].number
+   //             : "No Phone Number";
+   //       await addContactToDatabase(database, selectedContact.name, phone, selectedTier);
+   //       setSelectedContact(null);
+   //       setSelectedTier(1);
+   //       toggleAddModal();
+   //       await syncNetwork();
+   //    } catch (error) {
+   //       console.error("Error fetching network document:", error);
+   //    } finally {
+   //       setIsLoading(false);
+   //    }
+   // };
+
+   async function addContactToDatabase(db, name, phone, level) {
+      console.log("adding contact...." + name);
+      if (name === null || name === "") {
+         return null;
       }
-   };
+
+      // check if the person has already been added based on phone number
+      const result = await db.getFirstAsync(
+         "SELECT * FROM CONTACTS WHERE phone = ?;",
+         phone,
+      );
+
+      // if they haven't then add them
+      if (result === null) {
+         return db.runAsync(
+            "INSERT INTO CONTACTS (name, phone, level) VALUES (?, ?, ?);",
+            name,
+            phone,
+            level,
+         );
+      }
+   }
+
+   async function deleteContactFromDatabase(db, contact_id) {
+      console.log("Preparing result...");
+      const result = await db.getFirstAsync(
+         "DELETE FROM contacts WHERE contact_id = ?;",
+         contact_id,
+      );
+      console.log("Successful result");
+      console.log("Result: " + result);
+
+      if (result === null) {
+         return db.runAsync("DELETE FROM CONTACTS WHERE contact_id = ?;", contact_id);
+      }
+   }
 
    useEffect(() => {
       (async () => {
@@ -149,6 +188,7 @@ export default function Network() {
             if (data != null) {
                const formattedContacts = data.map((contact) => ({
                   ...contact,
+                  name: contact.fullName,
                   phones: contact.phones
                      ? contact.phones.map((phone) => ({
                           ...phone,
@@ -224,7 +264,7 @@ export default function Network() {
                                     <TouchableOpacity
                                        onPress={() => {
                                           setSelectedContact(contact);
-                                          deleteContact(contact.phone);
+                                          deleteContact(contact.contact_id);
                                        }}
                                     >
                                        <Text
@@ -288,12 +328,11 @@ export default function Network() {
                   <ScrollView style={styles.scrollContainer}>
                      {filteredContacts.map((contact) => (
                         <ContactCard
-                           name={contact.fullName}
-                           //name={contact.getDetails([ContactField.FULL_NAME])}
-
+                           key={contact.contact_id}
+                           name={contact.name}
                            phone={
                               contact.phones && contact.phones.length > 0
-                                 ? //formatPhoneNumber(contact.phones[0].number)
+                                 ? 
                                    contact.phones[0].number
                                  : "No Phone Number"
                            }

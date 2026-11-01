@@ -53,8 +53,8 @@ export default function Achievements() {
             .getAllAsync("SELECT * FROM achievements ORDER BY date DESC;")
             .then((entries) => {
                setAchievments(
-                  entries.map((achievements, index) => ({
-                     id: achievements.achievement_id,
+                  entries.map((achievements) => ({
+                     achievement_id: achievements.achievement_id,
                      text: achievements.text,
                      // Assuming you want to display the accomplishment timestamp as well
                      timestamp: achievements.date,
@@ -112,9 +112,10 @@ export default function Achievements() {
                ) : (
                   achievements.map((achievement) => (
                      <Achievement
+                        key={achievement.achievement_id}
                         text={achievement.text}
                         timestamp={achievement.timestamp}
-                        id={achievement.achievement_id}
+                        achievement_id={achievement.achievement_id}
                      />
                   ))
                )}

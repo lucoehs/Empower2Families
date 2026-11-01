@@ -20,7 +20,7 @@ const migrations = [
       CREATE TABLE IF NOT EXISTS contacts (
         contact_id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
-        phone TEXT,
+        phone TEXT UNIQUE,
         level INTEGER
       );
     `);
@@ -132,43 +132,5 @@ export async function addUpdateChild(db, id, oldName, name, bday, bio) {
          bio,
          oldName,
       );
-   }
-}
-
-export async function addContact(db, id, name, phone, level) {
-   console.log("adding contact...." + name);
-   if (name === null || name === "") {
-      return null;
-   }
-   const result = await db.getFirstAsync(
-      "SELECT * FROM CONTACTS WHERE contact_id = ?;",
-      id,
-   );
-
-   if (result === null) {
-      return db.runAsync(
-         "INSERT INTO CONTACTS (name, phone, level) VALUES (?, ?, ?);",
-         name,
-         phone,
-         level,
-      );
-   }
-}
-
-export async function delContact(db, id, name, phone, level) {
-   if (name === null || name === "") {
-      return null;
-   }
-
-   console.log("Preparing result...");
-   const result = await db.getFirstAsync(
-      "DELETE FROM contacts WHERE contact_id = ?;",
-      id,
-   );
-   console.log("Successful result");
-   console.log("Result: " + result);
-
-   if (result === null) {
-      return db.runAsync("DELETE FROM CONTACTS WHERE contact_id = ?;", id);
    }
 }

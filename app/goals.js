@@ -251,12 +251,12 @@ export default function Goals() {
                   </View>
                ) : (
                   // Display goals
-                  goals.map((goal, goal_index) => (
+                  goals.map((goal) => (
                      <Goal
-                        key={goal_index}
+                        key={goal.goal_id}
+                        goal_id={goal.goal_id}
                         text={goal.text}
                         met={goal.met}
-                        goal_id={goal.goal_id}
                         onDelete={deleteGoal}
                         onEdit={editGoals}
                         onMet={setGoalToMet}

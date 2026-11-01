@@ -21,10 +21,10 @@ const RecentAchievements = () => {
          const entries = database.getAllSync(
             "SELECT * FROM achievements ORDER BY date DESC;",
          );
-         achievements = entries.map((goals, index) => ({
-            id: goals.goal_id,
-            text: goals.text,
-            timestamp: goals.date,
+         achievements = entries.map((achievement) => ({
+            id: achievement.achievement_id,
+            text: achievement.text,
+            timestamp: achievement.date,
          }));
       } catch (error) {
          console.error("Error fetching achievements document:", error);
@@ -66,7 +66,7 @@ const RecentAchievements = () => {
          <View style={raStyles.tileContainer}>
             {achievements.map((achievement) => (
                <Tile
-                  key={achievement.achievement_id}
+                  key={achievement.id}
                   text={achievement.text}
                   timestamp={achievement.timestamp}
                />

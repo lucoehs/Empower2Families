@@ -15,65 +15,65 @@ import ButtonGrid from "@/components/ButtonGrid";
 import RecentAchievements from "@/components/RecentAchievements";
 
 export default function Home() {
-  // Allow debugging of local database in debug mode
-  //const db = useSQLiteContext()
-  //useDrizzleStudio(db)
+   // Allow debugging of local database in debug mode
+   //const db = useSQLiteContext()
+   //useDrizzleStudio(db)
 
-  return (
-    <ScrollView style={styles.scrollContainer}>
-      <View style={styles.mainContentContainer}>
-        <View style={styles.userContainer}>
-          {/* <SignInButton/> */}
-          <SmallNavButton text="Child Info" navTo="child-info" />
-        </View>
-        <WideNavButton text="My Network" navTo="network" />
-        <ButtonGrid text="Reflections" buttonInfo={reflectionButtons} />
-        <RecentAchievements />
-        <WideNavButton text="Resources" navTo="resources" />
-      </View>
-    </ScrollView>
-  );
+   return (
+      <ScrollView style={styles.scrollContainer}>
+         <View style={styles.mainContentContainer}>
+            <View style={styles.userContainer}>
+               {/* <SignInButton/> */}
+               <SmallNavButton text="Child Info" navTo="child-info" />
+            </View>
+            <WideNavButton text="My Network" navTo="network" />
+            <ButtonGrid text="Reflections" buttonInfo={reflectionButtons} />
+            <RecentAchievements />
+            <WideNavButton text="Resources" navTo="resources" />
+         </View>
+      </ScrollView>
+   );
 }
 
 const reflectionButtons = [
-  {
-    text: "Goals",
-    nav: "goals",
-  },
-  {
-    text: "Achievements",
-    nav: "achievements",
-  },
-  {
-    text: "Stressors",
-    nav: "stressors",
-  },
-  {
-    text: "Supports",
-    nav: "supports",
-  },
+   {
+      text: "Goals",
+      nav: "goals",
+   },
+   {
+      text: "Achievements",
+      nav: "achievements",
+   },
+   {
+      text: "Stressors",
+      nav: "stressors",
+   },
+   {
+      text: "Supports",
+      nav: "supports",
+   },
 ];
 
 const styles = StyleSheet.create({
-  mainContentContainer: {
-    flex: 1,
-    flexDirection: "column",
-    backgroundColor: COLORS.lightModeBG,
-    paddingHorizontal: 40,
-    paddingBottom: 40,
-    paddingTop: 10,
-  },
-  userContainer: {
-    flexDirection: "row",
-    marginTop: 0,
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    width: "auto",
-  },
-  SignInButton: {
-    width: 10,
-  },
+   scrollContainer: {
+      flexGrow: 1,
+      width: "auto",
+   },
+   mainContentContainer: {
+      flex: 1,
+      flexDirection: "column",
+      paddingTop: 10,
+      paddingBottom: 40,
+      paddingHorizontal: 40,
+      backgroundColor: COLORS.lightModeBG,
+   },
+   userContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginTop: 0,
+   },
+   SignInButton: {
+      width: 10,
+   },
 });

@@ -8,6 +8,7 @@ You will need the following packages on your system
 - Android SDK if you are developing for Android
 
 From the project root folder run the following.
+
 > **Note:** the usage of yarn is important as eas currently produces bad APKs when using normal npm for some unknown
 > reason.
 

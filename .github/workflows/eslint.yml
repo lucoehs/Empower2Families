@@ -2,21 +2,21 @@ name: ESLint
 on: push
 
 jobs:
-    eslint:
-        name: Run ESLint
-        runs-on: ubuntu-latest
-        steps:
-            - name: 🏗 Setup repo
-              uses: actions/checkout@v3
+   eslint:
+      name: Run ESLint
+      runs-on: ubuntu-latest
+      steps:
+         - name: 🏗 Setup repo
+           uses: actions/checkout@v3
 
-            - name: 🏗 Setup Node
-              uses: actions/setup-node@v3
-              with:
-                  node-version: 18.x
-                  cache: yarn
+         - name: 🏗 Setup Node
+           uses: actions/setup-node@v3
+           with:
+              node-version: 18.x
+              cache: yarn
 
-            - name: 📦 Install dependencies
-              run: yarn install
+         - name: 📦 Install dependencies
+           run: yarn install
 
-            - name: Run Lint
-              run: npm run lint
+         - name: Run Lint
+           run: npm run lint

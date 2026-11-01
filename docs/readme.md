@@ -5,8 +5,7 @@ development and contributing (TODO).
 
 1. [About the App](./about.md)
 2. [Setting up Your Machine for Development](./setup.md)
-    - Development with Nix
+   - Development with Nix
 3. [Introduction to Expo Go](./expo.md)
-    - CD/CI and Expo Application Services
+   - CD/CI and Expo Application Services
 4. [New Release Process](./releases.md)
-

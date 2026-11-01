@@ -1,31 +1,31 @@
 name: EAS Build
 on:
-    push:
-        branches:
-            - master
+   push:
+      branches:
+         - master
 
 jobs:
-    build:
-        name: Build
-        runs-on: ubuntu-latest
-        steps:
-            - name: 🏗 Setup repo
-              uses: actions/checkout@v3
+   build:
+      name: Build
+      runs-on: ubuntu-latest
+      steps:
+         - name: 🏗 Setup repo
+           uses: actions/checkout@v3
 
-            - name: 🏗 Setup Node
-              uses: actions/setup-node@v3
-              with:
-                  node-version: 18.x
-                  cache: yarn
+         - name: 🏗 Setup Node
+           uses: actions/setup-node@v3
+           with:
+              node-version: 18.x
+              cache: yarn
 
-            - name: 🏗 Setup EAS
-              uses: expo/expo-github-action@v8
-              with:
-                  eas-version: latest
-                  token: ${{ secrets.EXPO_TOKEN }}
+         - name: 🏗 Setup EAS
+           uses: expo/expo-github-action@v8
+           with:
+              eas-version: latest
+              token: ${{ secrets.EXPO_TOKEN }}
 
-            - name: 📦 Install dependencies
-              run: yarn install
+         - name: 📦 Install dependencies
+           run: yarn install
 
-            - name: 🚀 Create Build
-              run: eas build --profile preview --platform android --non-interactive --no-wait
+         - name: 🚀 Create Build
+           run: eas build --profile preview --platform android --non-interactive --no-wait

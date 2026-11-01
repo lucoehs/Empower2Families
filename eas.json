@@ -1,32 +1,32 @@
 {
-    "cli": {
-        "version": ">= 7.1.2",
-        "appVersionSource": "remote"
-    },
-    "build": {
-        "production": {
-            "node": "20.17.0",
-            "autoIncrement": true  //increments the versionCode each time a production build is made
-        },
-        "preview": {
-            "extends": "production",
-            "distribution": "internal"
-        },
-        "development": {
-            "extends": "production",
-            "developmentClient": true,
-            "distribution": "internal"
-        },
-        "development-simulator": {
-            "developmentClient": true,
-            "distribution": "internal",
-            "ios": {
-                "simulator": true
-            },
-            "environment": "development"
-        }
-    },
-    "submit": {
-        "production": {}
-    }
+   "cli": {
+      "version": ">= 7.1.2",
+      "appVersionSource": "remote"
+   },
+   "build": {
+      "production": {
+         "node": "20.17.0",
+         "autoIncrement": true //increments the versionCode each time a production build is made
+      },
+      "preview": {
+         "extends": "production",
+         "distribution": "internal"
+      },
+      "development": {
+         "extends": "production",
+         "developmentClient": true,
+         "distribution": "internal"
+      },
+      "development-simulator": {
+         "developmentClient": true,
+         "distribution": "internal",
+         "ios": {
+            "simulator": true
+         },
+         "environment": "development"
+      }
+   },
+   "submit": {
+      "production": {}
+   }
 }

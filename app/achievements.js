@@ -26,22 +26,29 @@ export default function Achievements() {
    // get database
    const database = useSQLiteContext();
 
-   // UI variables
+   // Toggle variables
    const [isLoading, setIsLoading] = useState(true);
    const [isModalVisible, setModalVisible] = useState(false);
    const [editModalVisible, setEditModalVisible] = useState(false);
 
-   // Text input variables
-   const [errorMessage, setErrorMessage] = useState("");
-   const [newAchievementText, setNewAchievementText] = useState("");
-
    // Database variables
    const [achievements, setAchievments] = useState([]);
 
+   // Input variables
+   const [newAchievementText, setNewAchievementText] = useState("");
+
+   // Output variables 
    const emptyAlert =
       "You don’t have any goals added yet, click the blue plus sign to add one!";
-
-   const toggleModal = () => {
+   const [errorMessage, setErrorMessage] = useState("");
+   
+   // Effects
+   useEffect(() => {
+      getAchievements();
+   }, []);
+   
+   // Event handlers
+      const toggleModal = () => {
       setModalVisible(!isModalVisible);
    };
 
@@ -93,10 +100,6 @@ export default function Achievements() {
       }
       setNewAchievementText("");
    };
-
-   useEffect(() => {
-      getAchievements();
-   }, []);
 
    return (
       <View style={styles.bodyContainer}>

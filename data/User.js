@@ -94,43 +94,4 @@ export async function migrateDbIfNeeded(db) {
    await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
 }
 
-// TODO sync operations
 
-/**
- * Either insert new item or update existing data
- * @todo this method currently does no sanatization, it's probably fine since it's local but it should. This function should also be moved to the child-info screen
- * @param db
- * @param {string} oldName Value to use for primary key when searching for existing data
- * @param {string} name Value for "name" field
- * @param {string} bday Value for "birthday" field
- * @param {string} bio Value for "bio" field
- */
-export async function addUpdateChild(db, id, oldName, name, bday, bio) {
-   // make sure no info is null
-   if (id === null || name === null || name === "" || oldName === null || oldName === "") {
-      return null;
-   }
-   // select child to update
-   const result = await db.getFirstAsync(
-      "SELECT * FROM children WHERE child_id = ?;",
-      id,
-   );
-
-   // if the child doesn't exist make a new one
-   if (result === null) {
-      return db.runAsync(
-         "INSERT INTO children (name, bday, bio) VALUES (?, ?, ?);",
-         name,
-         bday,
-         bio,
-      );
-   } else {
-      return db.runAsync(
-         "UPDATE children SET name = ?, bday = ?, bio = ? WHERE name = ?;",
-         name,
-         bday,
-         bio,
-         oldName,
-      );
-   }
-}

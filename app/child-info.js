@@ -88,14 +88,14 @@ export default function ChildInfo() {
 
    function handleSubmitChildInfo() {
       if (tempName && tempBirthday && tempBio) {
-         User.addUpdateChildren(
+         addUpdateChildren(
             database,
             name,
             tempName,
             tempBirthday,
             tempBio,
          ).then(
-            () => syncDisplayChildInfo(),
+            () => syncDisplayChildren(),
             (entry) => console.log(entry),
          );
          setEditModalVisible(false);
@@ -125,11 +125,11 @@ export default function ChildInfo() {
 
       fetchStoredImageURI();
 
-      syncDisplayChildInfo();
+      syncDisplayChildren();
    }, [database]);
 
    useEffect(() => {
-      setChildInfoDefined(name !== "" && name !== undefined);
+      setChildrenDefined(name !== "" && name !== undefined);
    }, [name]);
 
    useEffect(() => {
@@ -143,7 +143,7 @@ export default function ChildInfo() {
          <ScrollView style={styles.scrollContainer}>
             <View style={styles.bodyContainer}>
                <Text style={COMMONSTYLES.pageTitle}>Child Info</Text>
-               {isChildInfoDefined ? (
+               {isChildrenDefined ? (
                   <View style={styles.childInfo}>
                      {/* Child image/image upload */}
                      <Pressable
@@ -241,6 +241,36 @@ export default function ChildInfo() {
          </Modal>
       </View>
    );
+}
+
+async function addUpdateChildren(db, oldName, name, bday, bio) {
+   // check if child needs to be added or updated
+   if (name === null || name === "" || oldName === null || oldName === "") {
+      return null;
+   }
+   // select child to update
+   const result = await db.getFirstAsync(
+      "SELECT * FROM children WHERE name = ?;",
+      oldName,
+   );
+
+   // if the child doesn't exist make a new one
+   if (result === null) {
+      return db.runAsync(
+         "INSERT INTO children (name, bday, bio) VALUES (?, ?, ?);",
+         name,
+         bday,
+         bio,
+      );
+   } else {
+      return db.runAsync(
+         "UPDATE children SET name = ?, bday = ?, bio = ? WHERE name = ?;",
+         name,
+         bday,
+         bio,
+         oldName,
+      );
+   }
 }
 
 const styles = StyleSheet.create({

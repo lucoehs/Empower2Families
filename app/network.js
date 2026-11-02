@@ -47,24 +47,84 @@ export default function Network() {
    // get database
    const database = useSQLiteContext();
 
-   // Variables to track and set states of various things such as element visibility or an array of items
+   // UI variables
    const [isLoading, setIsLoading] = useState(true);
    const [isContactsListModalVisible, setContactsListModalVisible] =
       useState(false);
    const [isAddModalVisible, setAddModalVisible] = useState(false);
    const [isMessageModalVisible, setMessageModalVisible] = useState(false);
 
+   // Database variables
    const [contacts, setContacts] = useState([]);
    const [filteredContacts, setFilteredContacts] = useState([]);
    const [network, setNetwork] = useState([]);
 
+   // Input variables
    const [selectedTier, setSelectedTier] = useState(1);
    const [selectedContact, setSelectedContact] = useState(null);
    const [searchQuery, setSearchQuery] = useState("");
 
+   // Output variables
    const emptyAlert =
       "You don’t have any supports added yet, click the blue plus sign to add one!";
+   const [tierInfo, setTierInfo] = useState("\"Immediate\" contacts are people closest to you and your child(ren). Ex. Family, school, daycare, etc.");
 
+   useEffect(() => {
+      (async () => {
+         const { status } = await requestPermissionsAsync();
+         if (status === "granted") {
+            const data = await Contact.getAllDetails([
+               ContactField.FULL_NAME,
+               ContactField.PHONES,
+            ]);
+            if (data != null) {
+               const formattedContacts = data.map((contact) => ({
+                  ...contact,
+                  name: contact.fullName,
+                  phones: contact.phones
+                     ? contact.phones.map((phone) => ({
+                        ...phone,
+                        number: formatPhoneNumber(
+                           phone.number.replace(/^\+?1?/, ""),
+                        ), // Remove +1 country code and leading 1
+                     }))
+                     : [],
+               }));
+               setContacts(formattedContacts);
+               setFilteredContacts(formattedContacts);
+            } else {
+               console.log("null");
+            }
+         }
+      })();
+   }, []);
+
+   useEffect(() => {
+      const filtered = contacts.filter((contact) =>
+         contact.fullName.toLowerCase().includes(searchQuery.toLowerCase()),
+      );
+      setFilteredContacts(filtered);
+      syncNetwork();
+   }, [searchQuery]);
+
+   const changeTierInfo = (selectedTier) => {
+      switch (selectedTier) {
+         case 1: // Selected tier = Immediate
+            setTierInfo("\"Immediate\" contacts are people closest to you and your child(ren). Ex. Family, school, daycare, etc.");
+            break;
+         case 2: // Selected tier = Natural
+            setTierInfo("\"Natural\" contacts are people who see your child(ren) at least once a week. Ex. Therapist, church, playgroup, etc.");
+            break;
+         case 3: // Selected tier = Interest
+            setTierInfo("\"Interest\" contacts are people who see your child(ren) once a month or so. Ex. Physician, parent support group, etc.");
+            break;
+         case 4: // Selected tier = Community
+            setTierInfo("\"Community\" contacts are other people in your life who provide support and/or guidance.");
+            break;
+         default:
+            setTierInfo("error");
+      }
+   };
    const toggleContactsListModal = () => {
       setContactsListModalVisible(!isContactsListModalVisible);
    };
@@ -91,7 +151,7 @@ export default function Network() {
          selectedContact.phones.length > 0
             ? selectedContact.phones[0].number
             : "No Phone Number";
-      console.log(name)
+
       await addContactToDatabase(database, name, phone, selectedTier);
       setSelectedContact(null);
       setSelectedTier(1);
@@ -134,7 +194,6 @@ export default function Network() {
    // };
 
    async function addContactToDatabase(db, name, phone, level) {
-      console.log("adding contact...." + name);
       if (name === null || name === "") {
          return null;
       }
@@ -147,6 +206,7 @@ export default function Network() {
 
       // if they haven't then add them
       if (result === null) {
+         console.log("adding contact...." + name);
          return db.runAsync(
             "INSERT INTO CONTACTS (name, phone, level) VALUES (?, ?, ?);",
             name,
@@ -169,51 +229,6 @@ export default function Network() {
          return db.runAsync("DELETE FROM CONTACTS WHERE contact_id = ?;", contact_id);
       }
    }
-
-   useEffect(() => {
-      (async () => {
-         const { status } = await requestPermissionsAsync();
-         if (status === "granted") {
-            //const {data} = await Contact.getAllDetails(['givenName', 'phones']);
-
-            // const {data} = await Contact.getAllDetails([ContactField.FULL_NAME, ContactField.PHONES], {
-            //     limit: 20,
-            //     offset: 10,
-            //     sortOrder: ContactsSortOrder.GivenName,
-            // });
-            const data = await Contact.getAllDetails([
-               ContactField.FULL_NAME,
-               ContactField.PHONES,
-            ]);
-            if (data != null) {
-               const formattedContacts = data.map((contact) => ({
-                  ...contact,
-                  name: contact.fullName,
-                  phones: contact.phones
-                     ? contact.phones.map((phone) => ({
-                          ...phone,
-                          number: formatPhoneNumber(
-                             phone.number.replace(/^\+?1?/, ""),
-                          ), // Remove +1 country code and leading 1
-                       }))
-                     : [],
-               }));
-               setContacts(formattedContacts);
-               setFilteredContacts(formattedContacts);
-            } else {
-               console.log("null");
-            }
-         }
-      })();
-   }, []);
-
-   useEffect(() => {
-      const filtered = contacts.filter((contact) =>
-         contact.fullName.toLowerCase().includes(searchQuery.toLowerCase()),
-      );
-      setFilteredContacts(filtered);
-      syncNetwork();
-   }, [searchQuery]);
 
    return (
       <View style={styles.bodyContainer}>
@@ -238,14 +253,15 @@ export default function Network() {
                               {index === 0
                                  ? "Immediate"
                                  : index === 1
-                                   ? "Natural"
-                                   : index === 2
-                                     ? "Interest"
-                                     : "Community"}
+                                    ? "Natural"
+                                    : index === 2
+                                       ? "Interest"
+                                       : "Community"}
                            </Text>
 
                            {levelContacts.map((contact) => (
                               <View
+                                 key={contact.contact_id}
                                  style={[
                                     styles.menuContainer,
                                     styles.contactDisplay,
@@ -293,7 +309,7 @@ export default function Network() {
             }}
          />
 
-         {/* Opens the add contact modal */}
+         {/* Opens the contact list modal */}
          <AddButton onPress={toggleContactsListModal} />
 
          {/* How contact list modal will appear */}
@@ -317,6 +333,7 @@ export default function Network() {
 
                   <Text style={COMMONSTYLES.modalTitle}>Add Contact</Text>
 
+                  {/* search bar for contact list */}
                   <TextInput
                      style={styles.searchInput}
                      placeholder="Search by name..."
@@ -325,17 +342,19 @@ export default function Network() {
                      onChangeText={(text) => setSearchQuery(text)}
                   />
 
+                  {/* how each contact in the list will appear */}
                   <ScrollView style={styles.scrollContainer}>
-                     {filteredContacts.map((contact) => (
-                        <ContactCard
-                           key={contact.contact_id}
+                     {filteredContacts.map((contact, index) => (
+                        <ContactOnPhone
+                           key={index}
                            name={contact.name}
                            phone={
                               contact.phones && contact.phones.length > 0
-                                 ? 
-                                   contact.phones[0].number
+                                 ?
+                                 contact.phones[0].number
                                  : "No Phone Number"
                            }
+                           // when contact is selected:
                            onPress={() => {
                               setSelectedContact(contact);
                               toggleContactsListModal();
@@ -372,10 +391,10 @@ export default function Network() {
                         </Text>
                         <Text style={styles.selectedContactNumber}>
                            {selectedContact.phones &&
-                           selectedContact.phones.length > 0
+                              selectedContact.phones.length > 0
                               ? formatPhoneNumber(
-                                   selectedContact.phones[0].number,
-                                )
+                                 selectedContact.phones[0].number,
+                              )
                               : "No Phone Number"}
                         </Text>
                      </View>
@@ -386,13 +405,15 @@ export default function Network() {
                   <Picker
                      style={styles.tierSelecter}
                      selectedValue={selectedTier}
-                     onValueChange={(itemValue) => setSelectedTier(itemValue)}
+                     onValueChange={(itemValue) => { setSelectedTier(itemValue); changeTierInfo(itemValue); }}
                   >
                      <Picker.Item label="Immediate" value={1} />
                      <Picker.Item label="Natural" value={2} />
                      <Picker.Item label="Interest" value={3} />
                      <Picker.Item label="Community" value={4} />
                   </Picker>
+
+                  <Text style={{ ...COMMONSTYLES.modalInfo, marginBottom: 0 }} >{tierInfo}</Text>
 
                   <TouchableOpacity
                      style={COMMONSTYLES.submitButton}
@@ -423,7 +444,7 @@ function NewMessageButton({ onPress }) {
    );
 }
 
-function ContactCard({ name, phone, onPress }) {
+function ContactOnPhone({ name, phone, onPress }) {
    return (
       <TouchableOpacity onPress={onPress}>
          <View style={contactStyles.container}>
@@ -523,7 +544,7 @@ const styles = StyleSheet.create({
       alignItems: "center",
       justifyContent: "space-between",
       padding: 20,
-      height: "40%",
+      height: "50%",
       width: "90%",
       borderRadius: 10,
       backgroundColor: "white",
@@ -542,8 +563,10 @@ const styles = StyleSheet.create({
       alignItems: "center",
       justifyItems: "space-between",
       padding: 10,
-      width: "80%",
+      width: "90%",
       borderRadius: 20,
+      borderWidth: 2,
+      borderColor: 'black',
       backgroundColor: COLORS.primaryColor.toString() + "50", // adds opacity to primary color
    },
    selectedContactName: {
@@ -579,11 +602,6 @@ const styles = StyleSheet.create({
       borderRadius: 10,
       backgroundColor: "white",
    },
-   // messageButtonContainer: {
-   //     position: 'absolute',
-   //     bottom: 100,
-   //     right: 30,
-   // },
    messageButtonContainer: {
       position: "absolute",
       left: 20,
@@ -601,32 +619,6 @@ const styles = StyleSheet.create({
       shadowOffset: { width: 0, height: 2 }, // For iOS shadow
       shadowOpacity: 0.8, // For iOS shadow
    },
-   // messageButton: {
-   //     width: 60,
-   //     height: 60,
-   //     borderRadius: 30,
-   //     backgroundColor: 'white',
-   //     alignItems: 'center',
-   //     justifyContent: 'center',
-   //     elevation: 5, // For Android shadow
-   //     shadowColor: '#000', // For iOS shadow
-   //     shadowOffset: {width: 0, height: 2}, // For iOS shadow
-   //     shadowOpacity: 0.8, // For iOS shadow
-   // },
-
-   // unused
-   // menu: {
-   //     position: "absolute",
-   //     backgroundColor: "white",
-   //     right: -20,
-   //     top: -80,
-   //     padding: 10,
-   //     elevation: 5, // For Android shadow
-   //     shadowColor: "#000", // For iOS shadow
-   //     shadowOffset: { width: 2, height: 4 }, // For iOS shadow
-   //     shadowOpacity: 0.2, // For iOS shadow
-   //     shadowRadius: 10,
-   // },
    menuContainer: {
       flexDirection: "row",
       alignItems: "center",

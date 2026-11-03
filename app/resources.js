@@ -19,10 +19,10 @@ import { COMMONSTYLES } from "@/constants/CommonStyles";
 import ResourceLink from "@/components/ResourceLink";
 
 const Resources = ({ navigation }) => {
-   // Variables to track and set states of various things such as element visibility or an array of items
+   // Data variables
    const [expandedSections, setExpandedSections] = useState({});
 
-   // Function to toggle the expansion state of a section
+   // Toggle the expansion state of a section
    const toggleSection = (sectionTitle) => {
       setExpandedSections((prevState) => ({
          ...prevState,
@@ -30,7 +30,7 @@ const Resources = ({ navigation }) => {
       }));
    };
 
-   // Function to render expand/collapse icon based on section's expansion state
+   // Render expand/collapse icon based on section's expansion state
    const renderExpandIcon = (sectionTitle) => (
       <MaterialCommunityIcons
          name={expandedSections[sectionTitle] ? "chevron-up" : "chevron-down"}
@@ -39,6 +39,7 @@ const Resources = ({ navigation }) => {
       />
    );
 
+   // Draw screen
    return (
       <ScrollView style={styles.bodyContainer}>
          <View style={styles.mainContentContainer}>
@@ -185,6 +186,7 @@ const Resources = ({ navigation }) => {
    );
 };
 
+// Main styles
 const styles = StyleSheet.create({
    bodyContainer: {
       height: "100%",

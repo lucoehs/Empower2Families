@@ -23,12 +23,12 @@ export default function SmallNavButton({ text, navTo }) {
 
 const smallButtonStyles = StyleSheet.create({
    button: {
-      backgroundColor: COLORS.primaryColor,
-      padding: 10,
-      borderRadius: 5,
-      marginVertical: 14,
-      height: 85,
       justifyContent: "flex-end",
+      marginVertical: 14,
+      padding: 10,
+      height: 85,
+      borderRadius: 5,
+      backgroundColor: COLORS.primaryColor,
       elevation: 5, // For Android shadow
       shadowColor: "#000", // For iOS shadow
       shadowOffset: { width: 2, height: 4 }, // For iOS shadow
@@ -36,8 +36,8 @@ const smallButtonStyles = StyleSheet.create({
       shadowRadius: 10,
    },
    buttonText: {
-      color: "white",
-      fontSize: 15,
       fontWeight: "bold",
+      fontSize: 15,
+      color: "white",
    },
 });

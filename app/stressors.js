@@ -23,28 +23,50 @@ import AddButton from "@/components/AddButton";
 import ListItem from "@/components/ListItem";
 
 export default function Stressors() {
-   // get database
+   // Get database
    const database = useSQLiteContext();
 
-   // Variables to track and set states of various things such as element visibility or an array of items
+   // Toggle variables
    const [isLoading, setIsLoading] = useState(true);
-   const [isModalVisible, setModalVisible] = useState(false);
+   const [isAddModalVisible, setAddModalVisible] = useState(false);
    const [isEditModalVisible, setEditModalVisible] = useState(false);
 
+   // Data variables
    const [stressors, setStressors] = useState([]);
 
+   // Input variables
    const [editingStressorId, setEditingStressorsId] = useState(null);
    const [editedStressorsText, setEditedStressorsText] = useState("");
    const [stressorText, setStressorText] = useState("");
-   const [errorMessage, setErrorMessage] = useState("");
 
+   // Output variables
+   const [errorMessage, setErrorMessage] = useState("");
    const emptyAlert =
       "You don’t have any stressors added yet, click the blue plus sign to add one!";
 
-   const toggleModal = () => {
-      setModalVisible(!isModalVisible);
+   // Effects
+   useEffect(() => {
+      syncStressors();
+   }, []);
+
+   // Event handlers
+   const toggleAddModal = () => {
+      setAddModalVisible(!isAddModalVisible);
    };
 
+   const openEditModal = (stressor_id, text) => {
+      setEditedStressorsText(text);
+      setEditingStressorsId(stressor_id);
+      setEditModalVisible(true);
+   };
+
+   const closeEditModal = () => {
+      setEditedStressorsText("");
+      setEditingStressorsId(null);
+      setEditModalVisible(false);
+   };
+
+   // Add stressor to the database
    const addStressor = async () => {
       try {
          if (stressorText.length > 0) {
@@ -52,9 +74,9 @@ export default function Stressors() {
                "INSERT INTO stressors (text) VALUES (?, ?);",
                stressorText,
             );
-            toggleModal(); // Close the modal after adding
+            toggleAddModal(); // Close the add modal after adding
 
-            getStressors();
+            syncStressors();
          } else {
             setErrorMessage("Stressor cannot be blank.");
             setTimeout(() => {
@@ -69,7 +91,8 @@ export default function Stressors() {
       }
    };
 
-   const getStressors = async () => {
+   // Sync stressors from database
+   const syncStressors = async () => {
       setIsLoading(true);
 
       try {
@@ -88,19 +111,27 @@ export default function Stressors() {
       }
    };
 
+   // Delete stressor from the database
    const deleteStressor = async (stressor_id) => {
       try {
-         await database.runAsync("DELETE FROM stressors WHERE stressor_id = ?", stressor_id);
-         getStressors();
+         await database.runAsync(
+            "DELETE FROM stressors WHERE stressor_id = ?",
+            stressor_id,
+         );
+         syncStressors();
       } catch (error) {
          console.log(error);
       }
    };
 
+   // Select stressor to edit and open the edit modal
    const editStressor = async (stressor_id) => {
       try {
          database
-            .getFirstAsync("SELECT * FROM stressors WHERE stressor_id = ?", stressor_id)
+            .getFirstAsync(
+               "SELECT * FROM stressors WHERE stressor_id = ?",
+               stressor_id,
+            )
             .then(
                async (entry) => {
                   await openEditModal(stressor_id, entry.text);
@@ -112,6 +143,7 @@ export default function Stressors() {
       }
    };
 
+   // Submit edited stressor
    const saveEditedStressor = async () => {
       try {
          if (
@@ -129,7 +161,7 @@ export default function Stressors() {
             closeEditModal();
 
             // Refresh the stressors array
-            getStressors();
+            syncStressors();
          } else {
             console.error("Invalid editedStressorsText:", editedStressorsText);
          }
@@ -138,27 +170,17 @@ export default function Stressors() {
       }
    };
 
-   const openEditModal = (stressor_id, text) => {
-      setEditedStressorsText(text);
-      setEditingStressorsId(stressor_id);
-      setEditModalVisible(true);
-   };
-
-   const closeEditModal = () => {
-      setEditedStressorsText("");
-      setEditingStressorsId(null);
-      setEditModalVisible(false);
-   };
-
-   useEffect(() => {
-      getStressors();
-   }, []);
-
+   // Draw screen
    return (
+      // Holds all content below the header
       <View style={styles.bodyContainer}>
+         {/* Allows the content to scroll */}
          <ScrollView style={styles.scrollContainer}>
+            {/* Holds stresors content */}
             <View style={styles.mainContentContainer}>
+               {/* Page title */}
                <Text style={COMMONSTYLES.pageTitle}>Stressors</Text>
+               {/* Display stressors, if there are none display the empty message */}
                {isLoading ? (
                   <ActivityIndicator size="large" color={COLORS.primaryColor} />
                ) : stressors.length === 0 ? (
@@ -177,16 +199,22 @@ export default function Stressors() {
                )}
             </View>
          </ScrollView>
-         <AddButton onPress={toggleModal} />
-         <Modal visible={isModalVisible} transparent animationType="fade">
+
+         {/* Opens the add modal */}
+         <AddButton onPress={toggleAddModal} />
+
+         {/* How the add modal will appear*/}
+         <Modal visible={isAddModalVisible} transparent animationType="fade">
             <View style={styles.modalContainer}>
+               {/* Display error message if one exists */}
                {errorMessage !== "" && (
                   <Text style={COMMONSTYLES.errorText}>{errorMessage}</Text>
                )}
                <View style={styles.modalContent}>
+                  {/* Close button */}
                   <TouchableOpacity
                      style={COMMONSTYLES.closeButton}
-                     onPress={toggleModal}
+                     onPress={toggleAddModal}
                   >
                      <MaterialCommunityIcons
                         name="close"
@@ -195,17 +223,22 @@ export default function Stressors() {
                      />
                   </TouchableOpacity>
 
+                  {/* Title and info */}
                   <Text style={COMMONSTYLES.modalTitle}>Add Stressor</Text>
                   <Text style={COMMONSTYLES.modalInfo}>
                      A stressor can be anything that causes you strain or
                      tension!
                   </Text>
+
+                  {/* Input */}
                   <TextInput
                      style={COMMONSTYLES.modalInput}
                      placeholder="Enter your stressor here ..."
                      placeholderTextColor={COLORS.placeholderText}
                      onChangeText={(text) => setStressorText(text)}
                   />
+
+                  {/* Submit button */}
                   <TouchableOpacity
                      style={COMMONSTYLES.submitButton}
                      onPress={addStressor}
@@ -217,9 +250,12 @@ export default function Stressors() {
                </View>
             </View>
          </Modal>
+
+         {/* How the edit modal will appear */}
          <Modal visible={isEditModalVisible} transparent animationType="fade">
             <View style={styles.modalContainer}>
                <View style={styles.modalContent}>
+                  {/* Close button */}
                   <TouchableOpacity
                      style={COMMONSTYLES.closeButton}
                      onPress={closeEditModal}
@@ -230,7 +266,11 @@ export default function Stressors() {
                         color="#000"
                      />
                   </TouchableOpacity>
+
+                  {/* Title */}
                   <Text style={COMMONSTYLES.modalTitle}>Edit Stressor</Text>
+
+                  {/* Input */}
                   <TextInput
                      style={COMMONSTYLES.modalInput}
                      placeholder="Enter your edited stressor here ..."
@@ -238,6 +278,8 @@ export default function Stressors() {
                      onChangeText={(text) => setEditedStressorsText(text)}
                      value={editedStressorsText}
                   />
+
+                  {/* Submit button */}
                   <TouchableOpacity
                      style={COMMONSTYLES.submitButton}
                      onPress={saveEditedStressor}
@@ -251,6 +293,7 @@ export default function Stressors() {
    );
 }
 
+// Main styles
 const styles = StyleSheet.create({
    bodyContainer: {
       flexGrow: 1,

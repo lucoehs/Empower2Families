@@ -28,21 +28,19 @@ import { COMMONSTYLES } from "@/constants/CommonStyles";
 import AddButton from "@/components/AddButton";
 
 export default function Goals() {
-   // Hooks
-
    // Get database
    const database = useSQLiteContext();
 
-   // Boolean states
+   // Toggle variables
    const [isLoading, setIsLoading] = useState(true);
    const [isEditModalVisible, setEditModalVisible] = useState(false);
    const [isAddModalVisible, setAddModalVisible] = useState(false);
 
-   // Data
+   // Data variables
    const [goals, setGoals] = useState([]);
-   const [goalText, setGoalText] = useState("");
 
-   // Temporary data
+   // Input variables
+   const [goalText, setGoalText] = useState("");
    const [editingGoalId, setEditingGoalId] = useState(null);
    const [editedGoalText, setEditedGoalText] = useState("");
 
@@ -52,13 +50,11 @@ export default function Goals() {
       "You don’t have any goals added yet, click the blue plus sign to add one!";
 
    // Effects
-
    useEffect(() => {
-      getGoals();
+      syncGoals();
    }, []);
 
    // Event handlers
-
    const toggleAddModal = () => {
       setAddModalVisible(!isAddModalVisible);
    };
@@ -75,6 +71,7 @@ export default function Goals() {
       setEditModalVisible(false);
    };
 
+   // Add goal to database
    const addGoal = async () => {
       try {
          // Trim whitespaces and make sure goalText is not empty
@@ -86,7 +83,7 @@ export default function Goals() {
                false,
             );
             toggleAddModal();
-            getGoals();
+            syncGoals();
          } else {
             setErrorMessage("Goal cannot be blank.");
             setTimeout(() => {
@@ -100,7 +97,8 @@ export default function Goals() {
       }
    };
 
-   const getGoals = async () => {
+   // Get goals from the database and update
+   const syncGoals = async () => {
       setIsLoading(true);
       try {
          database.getAllAsync("SELECT * FROM goals;").then((goals) => {
@@ -119,30 +117,38 @@ export default function Goals() {
       }
    };
 
+   // Delete goal from databae and update view
    const deleteGoal = async (goal_id) => {
       try {
-         await database.runAsync("DELETE FROM goals WHERE goal_id = ?", goal_id);
+         await database.runAsync(
+            "DELETE FROM goals WHERE goal_id = ?",
+            goal_id,
+         );
 
          // Refresh the goals array
-         getGoals();
+         syncGoals();
       } catch (error) {
          console.log(error);
       }
    };
 
-   const editGoals = async (goal_id) => {
+   // Select goal that is being edited in the database and open the edit modal
+   const editGoal = async (goal_id) => {
       try {
-         database.getFirstAsync("SELECT * FROM goals WHERE goal_id = ?", goal_id).then(
-            async (goal) => {
-               await openEditModal(goal_id, goal.text);
-            },
-            (reason) => console.warn(reason),
-         );
+         database
+            .getFirstAsync("SELECT * FROM goals WHERE goal_id = ?", goal_id)
+            .then(
+               async (goal) => {
+                  await openEditModal(goal_id, goal.text);
+               },
+               (reason) => console.warn(reason),
+            );
       } catch (error) {
          console.error(error);
       }
    };
 
+   // Save the edited goal to the database and update the view
    const saveEditedGoal = async () => {
       try {
          if (editedGoalText !== undefined && editedGoalText.trim() !== "") {
@@ -162,7 +168,7 @@ export default function Goals() {
             closeEditModal();
 
             // Refresh the goals array
-            getGoals();
+            syncGoals();
          } else {
             console.error("Invalid editedGoalText:", editedGoalText);
          }
@@ -171,13 +177,13 @@ export default function Goals() {
       }
    };
 
+   // Mark goal at met and add it to the achievements table
    const setGoalToMet = async (goal_id) => {
       try {
          await database
             .getFirstAsync("SELECT * FROM goals WHERE goal_id = ?;", goal_id)
             .then(
                async (goal) => {
-
                   // Mark the goal as met
                   await database.runAsync(
                      "UPDATE goals SET met = 1 WHERE goal_id = ?;",
@@ -188,28 +194,26 @@ export default function Goals() {
                      "INSERT or IGNORE INTO achievements (text, date, goal_id) VALUES (?, ?, ?);",
                      goal.text,
                      Date.now(),
-                     goal.goal_id
+                     goal.goal_id,
                   );
-                  
-                  // Update the achievements
                },
                (reason) => console.warn(reason),
             );
 
          // Refresh the goals array
-         getGoals();
+         syncGoals();
       } catch (error) {
          console.error(error);
       }
    };
 
+   // Mark goal as not met (undo's it being set to met) and removes it from the achievements
    const setGoalToNotMet = async (goal_id) => {
       try {
          await database
             .getFirstAsync("SELECT * FROM goals WHERE goal_id = ?;", goal_id)
             .then(
                async (goal) => {
-
                   // Mark the goal as met
                   await database.runAsync(
                      "UPDATE goals SET met = 0 WHERE goal_id = ?;",
@@ -218,18 +222,19 @@ export default function Goals() {
 
                   // Delete entry in the achievements collection
                   try {
-                     await database.runAsync("DELETE FROM achievements WHERE goal_id = ?", goal_id);
+                     await database.runAsync(
+                        "DELETE FROM achievements WHERE goal_id = ?",
+                        goal_id,
+                     );
                   } catch (error) {
                      console.log(error);
                   }
-
-                  // Update the achievements
                },
                (reason) => console.warn(reason),
             );
 
          // Refresh the goals array
-         getGoals();
+         syncGoals();
       } catch (error) {
          console.error(error);
       }
@@ -237,10 +242,13 @@ export default function Goals() {
 
    // Draw screen
    return (
+      // Holds all content below the header
       <View style={styles.bodyContainer}>
+         {/* Allows content to be scrollable */}
          <ScrollView style={styles.scrollContainer}>
+            {/* Holds goals content */}
             <View style={styles.mainContentContainer}>
-               {/* Header */}
+               {/* Page title */}
                <Text style={COMMONSTYLES.pageTitle}>Goals</Text>
                {isLoading ? (
                   <ActivityIndicator size="large" color={COLORS.primaryColor} />
@@ -258,7 +266,7 @@ export default function Goals() {
                         text={goal.text}
                         met={goal.met}
                         onDelete={deleteGoal}
-                        onEdit={editGoals}
+                        onEdit={editGoal}
                         onMet={setGoalToMet}
                         onNotMet={setGoalToNotMet}
                      />
@@ -270,10 +278,10 @@ export default function Goals() {
          {/* Toggles modal to add goals*/}
          <AddButton onPress={toggleAddModal} />
 
-         {/* Add modal */}
+         {/* Modal to add goal */}
          <Modal visible={isAddModalVisible} transparent animationType="fade">
             <View style={styles.modalContainer}>
-               {errorMessage !== "" && (
+               {errorMessage !== "" && ( // display error message if one exists
                   <Text style={COMMONSTYLES.errorText}>{errorMessage}</Text>
                )}
                <View style={styles.modalContent}>
@@ -312,7 +320,7 @@ export default function Goals() {
             </View>
          </Modal>
 
-         {/* Edit modal */}
+         {/* Modal to edit goal */}
          <Modal visible={isEditModalVisible} transparent animationType="fade">
             <View style={styles.modalContainer}>
                <View style={styles.modalContent}>
@@ -390,7 +398,9 @@ function Goal({ text, met, goal_id, onDelete, onEdit, onMet, onNotMet }) {
                   </MenuOption>
                ) : (
                   <MenuOption onSelect={() => onNotMet(goal_id)}>
-                     <Text style={{ color: "darkorange" }}>Mark as incomplete</Text>
+                     <Text style={{ color: "darkorange" }}>
+                        Mark as incomplete
+                     </Text>
                   </MenuOption>
                )}
                {/* Delete goal */}
@@ -403,6 +413,7 @@ function Goal({ text, met, goal_id, onDelete, onEdit, onMet, onNotMet }) {
    );
 }
 
+// Styles for list of goals
 const listItemStyles = StyleSheet.create({
    contentContainer: {
       backgroundColor: "white",
@@ -442,6 +453,7 @@ const listItemStyles = StyleSheet.create({
    },
 });
 
+// Main styles
 const styles = StyleSheet.create({
    bodyContainer: {
       flexGrow: 1,

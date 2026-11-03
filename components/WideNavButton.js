@@ -21,12 +21,12 @@ export default function WideNavButton({ text, navTo }) {
 
 const wideButtonStyles = StyleSheet.create({
    button: {
-      backgroundColor: COLORS.primaryColor,
-      padding: 15,
-      borderRadius: 5,
-      marginVertical: 10,
       justifyContent: "flex-end",
+      marginVertical: 10,
+      padding: 15,
       height: 85,
+      borderRadius: 5,
+      backgroundColor: COLORS.primaryColor,
       elevation: 5, // For Android shadow
       shadowColor: "#000", // For iOS shadow
       shadowOffset: { width: 2, height: 4 }, // For iOS shadow
@@ -34,8 +34,8 @@ const wideButtonStyles = StyleSheet.create({
       shadowRadius: 10,
    },
    buttonText: {
-      color: "white",
-      fontSize: 15,
       fontWeight: "bold",
+      fontSize: 15,
+      color: "white",
    },
 });

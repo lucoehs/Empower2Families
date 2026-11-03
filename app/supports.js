@@ -23,24 +23,42 @@ import AddButton from "@/components/AddButton";
 import ListItem from "@/components/ListItem";
 
 const Supports = () => {
-   // get database
+   // Get database
    const database = useSQLiteContext();
 
-   // Variables to track and set states of various things such as element visibility or an array of items
+   // Toggle variables
    const [isLoading, setIsLoading] = useState(true);
    const [isAddModalVisible, setAddModalVisible] = useState(false);
    const [isEditModalVisible, setEditModalVisible] = useState(false);
 
+   // Data variables
    const [supports, setSupports] = useState([]);
 
-   //const [editingSupportId, setEditingSupportId] = useState(null);
+   // Input variables
    const [editedSupportText, setEditedSupportText] = useState("");
    const [supportText, setSupportText] = useState("");
-   const [errorMessage, setErrorMessage] = useState("");
 
+   // Output variables
+   const [errorMessage, setErrorMessage] = useState("");
    const emptyAlert =
       "You don’t have any supports added yet, click the blue plus sign to add one!";
 
+   // Effects
+   useEffect(() => {
+      syncSupports();
+   }, []);
+
+   // Event handlers
+   const toggleAddModal = () => {
+      setAddModalVisible(!isAddModalVisible);
+   };
+
+   const toggleEditModal = (support_id = null, text = "") => {
+      setEditedSupportText(text);
+      setEditModalVisible(!isEditModalVisible);
+   };
+
+   // Add support to database
    const addSupport = async () => {
       try {
          if (supportText.length > 0) {
@@ -50,7 +68,7 @@ const Supports = () => {
             );
             toggleAddModal(); // Close the modal after adding
 
-            getSupports();
+            syncSupports();
          } else {
             setErrorMessage("Support cannot be blank.");
             setTimeout(() => {
@@ -65,7 +83,8 @@ const Supports = () => {
       }
    };
 
-   const getSupports = async () => {
+   // Sync supports from database
+   const syncSupports = async () => {
       setIsLoading(true);
 
       try {
@@ -73,7 +92,7 @@ const Supports = () => {
             setSupports(
                entries.map((support) => ({
                   support_id: support.support_id,
-                  text: support.text
+                  text: support.text,
                })),
             );
          });
@@ -84,28 +103,39 @@ const Supports = () => {
       }
    };
 
+   // Delete support from database
    const deleteSupport = async (support_id) => {
       try {
-         await database.runAsync("DELETE FROM supports WHERE support_id = ?", support_id);
-         getSupports();
+         await database.runAsync(
+            "DELETE FROM supports WHERE support_id = ?",
+            support_id,
+         );
+         syncSupports();
       } catch (error) {
          console.log(error);
       }
    };
 
+   // Select support to edit and toggle edit modal
    const editSupport = async (support_id) => {
       try {
-         database.getFirstAsync("SELECT * FROM supports WHERE support_id = ?", support_id).then(
-            async (support) => {
-               await toggleEditModal(support_id, support.text);
-            },
-            (reason) => console.warn(reason),
-         );
+         database
+            .getFirstAsync(
+               "SELECT * FROM supports WHERE support_id = ?",
+               support_id,
+            )
+            .then(
+               async (support) => {
+                  await toggleEditModal(support_id, support.text);
+               },
+               (reason) => console.warn(reason),
+            );
       } catch (error) {
          console.error(error);
       }
    };
 
+   // Submit edited support to database
    const saveEditedSupport = async () => {
       try {
          if (
@@ -123,7 +153,7 @@ const Supports = () => {
             toggleEditModal(editingSupportId, editedSupportText);
 
             // Refresh the supports array
-            getSupports();
+            syncSupports();
          } else {
             console.error("Invalid editedSupportText:", editedSupportText);
          }
@@ -132,37 +162,17 @@ const Supports = () => {
       }
    };
 
-   // const openEditModal = (id, text) => {
-   //     setEditedSupportText(text);
-   //     setEditingSupportId(id);
-   //     setEditModalVisible(true);
-   // };
-
-   // const closeEditModal = () => {
-   //     setEditedSupportText('');
-   //     setEditingSupportId(null);
-   //     setEditModalVisible(false);
-   // };
-
-   const toggleEditModal = (support_id = null, text = "") => {
-      //setEditingSupportId(id);
-      setEditedSupportText(text);
-      setEditModalVisible(!isEditModalVisible);
-   };
-
-   const toggleAddModal = () => {
-      setAddModalVisible(!isAddModalVisible);
-   };
-
-   useEffect(() => {
-      getSupports();
-   }, []);
-
+   // Draw screen
    return (
+      // Holds all content below the header
       <View style={styles.bodyContainer}>
+         {/* Allows the content to scroll */}
          <ScrollView style={styles.scrollContainer}>
+            {/* Holds supports content */}
             <View style={styles.mainContentContainer}>
+               {/* Page title */}
                <Text style={COMMONSTYLES.pageTitle}>Supports</Text>
+               {/* Display supports, if there are none display the empty message */}
                {isLoading ? (
                   <ActivityIndicator size="large" color={COLORS.primaryColor} />
                ) : supports.length === 0 ? (
@@ -183,15 +193,18 @@ const Supports = () => {
             </View>
          </ScrollView>
 
+         {/* Opens the add modal */}
          <AddButton onPress={toggleAddModal} />
 
          {/* How the add modal will appear */}
          <Modal visible={isAddModalVisible} transparent animationType="fade">
             <View style={styles.addModalContainer}>
+               {/* Display error message if one exists */}
                {errorMessage !== "" && (
                   <Text style={COMMONSTYLES.errorText}>{errorMessage}</Text>
                )}
                <View style={styles.addModalContent}>
+                  {/* Close button */}
                   <TouchableOpacity
                      style={COMMONSTYLES.closeButton}
                      onPress={toggleAddModal}
@@ -203,17 +216,22 @@ const Supports = () => {
                      />
                   </TouchableOpacity>
 
+                  {/* Title and info */}
                   <Text style={COMMONSTYLES.modalTitle}>Add Support</Text>
                   <Text style={COMMONSTYLES.modalInfo}>
                      A support can be things that are going good, or things that
                      make you stronger/better!
                   </Text>
+
+                  {/* Input */}
                   <TextInput
                      style={COMMONSTYLES.modalInput}
                      placeholder="Enter your support here ..."
                      placeholderTextColor={COLORS.placeholderText}
                      onChangeText={(text) => setSupportText(text)}
                   />
+
+                  {/* Submit button */}
                   <TouchableOpacity
                      style={COMMONSTYLES.submitButton}
                      onPress={addSupport}
@@ -230,6 +248,7 @@ const Supports = () => {
          <Modal visible={isEditModalVisible} transparent animationType="fade">
             <View style={styles.addModalContainer}>
                <View style={styles.addModalContent}>
+                  {/* Close button */}
                   <TouchableOpacity
                      style={COMMONSTYLES.closeButton}
                      onPress={toggleEditModal}
@@ -240,7 +259,11 @@ const Supports = () => {
                         color="#000"
                      />
                   </TouchableOpacity>
+
+                  {/* Title */}
                   <Text style={COMMONSTYLES.modalTitle}>Edit Support</Text>
+
+                  {/* Input */}
                   <TextInput
                      style={COMMONSTYLES.modalInput}
                      placeholder="Enter your edited support here ..."
@@ -248,6 +271,8 @@ const Supports = () => {
                      onChangeText={(text) => setEditedSupportText(text)}
                      value={editedSupportText}
                   />
+
+                  {/* Submit button */}
                   <TouchableOpacity
                      style={COMMONSTYLES.submitButton}
                      onPress={saveEditedSupport}
@@ -261,6 +286,7 @@ const Supports = () => {
    );
 };
 
+// Main styles
 const styles = StyleSheet.create({
    bodyContainer: {
       flexGrow: 1,

@@ -27,30 +27,66 @@ import EditButton from "@/components/EditButton";
 import * as User from "@/data/User";
 
 export default function ChildInfo() {
-   // Variables to track and set states of various things such as element visibility or an array of items
-
-   // get database
+   // Get database
    const database = useSQLiteContext();
 
-   // UI variables
+   // Toggle variables
    const [isChildrenDefined, setChildrenDefined] = useState(false);
    const [isEditModalVisible, setEditModalVisible] = useState(false);
 
-   // Text input variables
-   const [tempName, setTempName] = useState("");
-   const [tempBio, setTempBio] = useState("");
-   const [tempBirthday, setTempBirthday] = useState("");
-   const [errorMessage, setErrorMessage] = useState("");
-
-   // Database variables
+   // Data variables
    const [name, setName] = useState("");
    const [bio, setBio] = useState("");
    const [birthday, setBirthday] = useState("");
    const [selectedImage, setSelectedImage] = useState("");
 
+   // Input variables
+   const [tempName, setTempName] = useState("");
+   const [tempBio, setTempBio] = useState("");
+   const [tempBirthday, setTempBirthday] = useState("");
+
+   // Output variables
+   const [errorMessage, setErrorMessage] = useState("");
+   const emptyAlert =
+      "You haven’t added your child(ren)’s info; yet, click the blue button to add them!";
+
+   // Effects
+   useEffect(() => {
+      const fetchStoredImageURI = async () => {
+         try {
+            const storedImageURI =
+               await AsyncStorage.getItem("selectedImageURI");
+            if (storedImageURI !== null) {
+               setSelectedImage(storedImageURI);
+            }
+         } catch (error) {
+            console.error(
+               "Error retrieving image URI from AsyncStorage:",
+               error,
+            );
+         }
+      };
+
+      fetchStoredImageURI();
+
+      syncChildren();
+   }, [database]);
+
+   useEffect(() => {
+      setChildrenDefined(name !== "" && name !== undefined);
+   }, [name]);
+
+   useEffect(() => {
+      setTempName(name);
+      setTempBio(bio);
+      setTempBirthday(birthday);
+   }, [isEditModalVisible]);
+
+   // Event handlers
+
    // TODO Update to allow for multiple children to be tracked, this currently assumes we only have one child
-   // syncs that information from the database that holds information about the child
-   function syncDisplayChildren() {
+   // Get children from the database
+   function syncChildren() {
       database.getFirstAsync("SELECT * FROM children").then(
          (child) => {
             setName(child?.name);
@@ -86,7 +122,8 @@ export default function ChildInfo() {
       }
    }
 
-   function handleSubmitChildInfo() {
+   // Validate info added and if it clears call the function update the database
+   function submitChildInfo() {
       if (tempName && tempBirthday && tempBio) {
          addUpdateChildren(
             database,
@@ -95,7 +132,7 @@ export default function ChildInfo() {
             tempBirthday,
             tempBio,
          ).then(
-            () => syncDisplayChildren(),
+            () => syncChildren(),
             (entry) => console.log(entry),
          );
          setEditModalVisible(false);
@@ -107,42 +144,17 @@ export default function ChildInfo() {
       }
    }
 
-   useEffect(() => {
-      const fetchStoredImageURI = async () => {
-         try {
-            const storedImageURI =
-               await AsyncStorage.getItem("selectedImageURI");
-            if (storedImageURI !== null) {
-               setSelectedImage(storedImageURI);
-            }
-         } catch (error) {
-            console.error(
-               "Error retrieving image URI from AsyncStorage:",
-               error,
-            );
-         }
-      };
-
-      fetchStoredImageURI();
-
-      syncDisplayChildren();
-   }, [database]);
-
-   useEffect(() => {
-      setChildrenDefined(name !== "" && name !== undefined);
-   }, [name]);
-
-   useEffect(() => {
-      setTempName(name);
-      setTempBio(bio);
-      setTempBirthday(birthday);
-   }, [isEditModalVisible]);
-
+   // Draw screen
    return (
-      <View style={{ flex: 1, backgroundColor: "white" }}>
+      // Holds all content below the header
+      <View style={styles.bodyContainer}>
+         {/* Allows content to be scrollable */}
          <ScrollView style={styles.scrollContainer}>
-            <View style={styles.bodyContainer}>
+            {/* Holds child infomation content */}
+            <View style={styles.mainContentContainer}>
+               {/* Page Title */}
                <Text style={COMMONSTYLES.pageTitle}>Child Info</Text>
+               {/* Display child(ren) if there is at least one define */}
                {isChildrenDefined ? (
                   <View style={styles.childInfo}>
                      {/* Child image/image upload */}
@@ -168,36 +180,36 @@ export default function ChildInfo() {
                         <Text style={styles.nameTitle}>Name: </Text>
                         {name}
                      </Text>
-
                      <Text style={styles.birthday}>
                         <Text style={styles.birthdayTitle}>Birthday: </Text>
                         {birthday}
                      </Text>
-
                      <Text style={styles.bio}>
                         <Text style={styles.bioTitle}>Bio: </Text>
                         {bio}
                      </Text>
                   </View>
                ) : (
+                  // If there are no children defined display empty message
                   <View style={COMMONSTYLES.emptyAlertContainer}>
-                     <Text style={COMMONSTYLES.emptyAlert}>
-                        You haven’t added your child(ren)’s info yet, click the
-                        blue button to add them!
-                     </Text>
+                     <Text style={COMMONSTYLES.emptyAlert}>{emptyAlert}</Text>
                   </View>
                )}
             </View>
          </ScrollView>
+
+         {/* Button to add/edit child. Later it will likely just be to add children */}
          <EditButton onPress={() => setEditModalVisible(!isEditModalVisible)} />
 
-         {/* Modal only displayed with editing child info */}
+         {/* Modal to add/edit child and their info */}
          <Modal visible={isEditModalVisible} transparent animationType="fade">
             <View style={styles.modalContainer}>
-               {errorMessage !== "" && (
+               {errorMessage !== "" && ( // Display error message if there is one
                   <Text style={COMMONSTYLES.errorText}>{errorMessage}</Text>
                )}
+               {/* Main content of edit modal */}
                <View style={styles.modalContent}>
+                  {/* Close button */}
                   <Pressable
                      style={COMMONSTYLES.closeButton}
                      onPress={() => setEditModalVisible(!isEditModalVisible)}
@@ -208,7 +220,13 @@ export default function ChildInfo() {
                         color="#000"
                      />
                   </Pressable>
-                  <Text style={COMMONSTYLES.modalTitle}>Add Child Info</Text>
+
+                  {/* Modal title */}
+                  <Text style={COMMONSTYLES.modalTitle}>
+                     Add/Edit Child Info
+                  </Text>
+
+                  {/* Input areas */}
                   <TextInput
                      style={COMMONSTYLES.modalInput}
                      placeholder="Name"
@@ -230,9 +248,11 @@ export default function ChildInfo() {
                      value={tempBio}
                      onChangeText={(text) => setTempBio(text)}
                   />
+
+                  {/* Submit button */}
                   <Pressable
                      style={COMMONSTYLES.submitButton}
-                     onPress={handleSubmitChildInfo}
+                     onPress={submitChildInfo}
                   >
                      <Text style={COMMONSTYLES.submitButtonText}>Submit</Text>
                   </Pressable>
@@ -243,6 +263,7 @@ export default function ChildInfo() {
    );
 }
 
+// Add or update child to/in database
 async function addUpdateChildren(db, oldName, name, bday, bio) {
    // check if child needs to be added or updated
    if (name === null || name === "" || oldName === null || oldName === "") {
@@ -254,7 +275,7 @@ async function addUpdateChildren(db, oldName, name, bday, bio) {
       oldName,
    );
 
-   // if the child doesn't exist make a new one
+   // if child with entered name doesn't exist make one
    if (result === null) {
       return db.runAsync(
          "INSERT INTO children (name, bday, bio) VALUES (?, ?, ?);",
@@ -263,6 +284,7 @@ async function addUpdateChildren(db, oldName, name, bday, bio) {
          bio,
       );
    } else {
+      // otherwise, update the existing child
       return db.runAsync(
          "UPDATE children SET name = ?, bday = ?, bio = ? WHERE name = ?;",
          name,
@@ -273,11 +295,16 @@ async function addUpdateChildren(db, oldName, name, bday, bio) {
    }
 }
 
+// Main styles
 const styles = StyleSheet.create({
+   bodyContainer: {
+      flexGrow: 1,
+      backgroundColor: "white",
+   },
    scrollContainer: {
       flexGrow: 1,
    },
-   bodyContainer: {
+   mainContentContainer: {
       flex: 1,
       paddingTop: 10,
       paddingBottom: 40,

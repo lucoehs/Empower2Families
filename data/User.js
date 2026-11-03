@@ -93,5 +93,3 @@ export async function migrateDbIfNeeded(db) {
    // Update DB version
    await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
 }
-
-

@@ -25,14 +25,14 @@ export const COMMONSTYLES = StyleSheet.create({
    },
    errorText: {
       color: "red",
+      margin: 50,
       marginBottom: 10,
+      padding: 10,
       textAlign: "center",
       borderWidth: 2,
-      borderColor: "red",
       borderRadius: 5,
-      padding: 10,
+      borderColor: "red",
       backgroundColor: "#ffe8e9",
-      margin: 50,
    },
    modalInfo: {
       textAlign: "center",
@@ -46,8 +46,8 @@ export const COMMONSTYLES = StyleSheet.create({
       height: 40,
       width: "100%",
       borderWidth: 1,
-      fontSize: 12,
       borderColor: "gray",
+      fontSize: 12,
       color: "black",
    },
    modalTitle: {

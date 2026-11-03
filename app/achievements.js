@@ -23,36 +23,36 @@ import { COMMONSTYLES } from "@/constants/CommonStyles";
 import AddButton from "@/components/AddButton";
 
 export default function Achievements() {
-   // get database
+   // Get database
    const database = useSQLiteContext();
 
    // Toggle variables
    const [isLoading, setIsLoading] = useState(true);
-   const [isModalVisible, setModalVisible] = useState(false);
-   const [editModalVisible, setEditModalVisible] = useState(false);
+   const [isAddModalVisible, setAddModalVisible] = useState(false);
 
-   // Database variables
+   // Data variables
    const [achievements, setAchievments] = useState([]);
 
    // Input variables
    const [newAchievementText, setNewAchievementText] = useState("");
 
-   // Output variables 
-   const emptyAlert =
-      "You don’t have any goals added yet, click the blue plus sign to add one!";
+   // Output variables
    const [errorMessage, setErrorMessage] = useState("");
-   
+   const emptyAlert =
+      "You don’t have any achievements added yet, click the blue plus sign to add one!";
+
    // Effects
    useEffect(() => {
-      getAchievements();
+      syncAchievements();
    }, []);
-   
+
    // Event handlers
-      const toggleModal = () => {
-      setModalVisible(!isModalVisible);
+   const toggleAddModal = () => {
+      setAddModalVisible(!isAddModalVisible);
    };
 
-   const getAchievements = async () => {
+   // Get the achievements stored in the database
+   const syncAchievements = async () => {
       setIsLoading(true);
 
       try {
@@ -63,9 +63,9 @@ export default function Achievements() {
                   entries.map((achievements) => ({
                      achievement_id: achievements.achievement_id,
                      text: achievements.text,
-                     // Assuming you want to display the accomplishment timestamp as well
+                     // Assuming you want to display the timestamp as well
                      timestamp: achievements.date,
-                     goal_id: achievements.goal_id
+                     goal_id: achievements.goal_id,
                   })),
                );
             });
@@ -76,6 +76,7 @@ export default function Achievements() {
       }
    };
 
+   // Add an achievement to the database and refresh the view to show it on the screen
    const addAchievement = async () => {
       try {
          // Trim whitespaces and check if goalText is not empty
@@ -85,10 +86,10 @@ export default function Achievements() {
                newAchievementText,
                Date.now(),
             );
-            toggleModal(); // Close the modal after adding achievement
+            toggleAddModal();
 
             // Refresh the achievements array
-            getAchievements();
+            syncAchievements();
          } else {
             setErrorMessage("Achievement cannot be blank.");
             setTimeout(() => {
@@ -101,18 +102,25 @@ export default function Achievements() {
       setNewAchievementText("");
    };
 
+   // Draw screen
    return (
+      // Holds all content below the header
       <View style={styles.bodyContainer}>
+         {/* Allows the content to scroll */}
          <ScrollView style={styles.scrollContainer}>
+            {/* Holds achievement content */}
             <View style={styles.mainContentContainer}>
+               {/* Page title */}
                <Text style={COMMONSTYLES.pageTitle}>Achievements</Text>
                {isLoading ? (
                   <ActivityIndicator size="large" color={COLORS.primaryColor} />
-               ) : achievements.length === 0 ? (
+               ) : // Display empty message if there are no achievements added
+               achievements.length === 0 ? (
                   <View style={COMMONSTYLES.emptyAlertContainer}>
                      <Text style={COMMONSTYLES.emptyAlert}>{emptyAlert}</Text>
                   </View>
                ) : (
+                  // Display achievements if there are acievements added
                   achievements.map((achievement) => (
                      <Achievement
                         key={achievement.achievement_id}
@@ -124,16 +132,23 @@ export default function Achievements() {
                )}
             </View>
          </ScrollView>
-         <AddButton onPress={toggleModal} />
-         <Modal visible={isModalVisible} transparent animationType="fade">
+
+         {/* Add achievement button */}
+         <AddButton onPress={toggleAddModal} />
+
+         {/* Modal to add an achievement */}
+         <Modal visible={isAddModalVisible} transparent animationType="fade">
             <View style={styles.addModalContainer}>
-               {errorMessage !== "" && (
+               {errorMessage !== "" && ( // Display the error message above modal if an error exists
                   <Text style={COMMONSTYLES.errorText}>{errorMessage}</Text>
                )}
+
+               {/* Main part of add modal */}
                <View style={styles.addModalContent}>
+                  {/* Close button */}
                   <TouchableOpacity
                      style={COMMONSTYLES.closeButton}
-                     onPress={toggleModal}
+                     onPress={toggleAddModal}
                   >
                      <MaterialCommunityIcons
                         name="close"
@@ -141,10 +156,14 @@ export default function Achievements() {
                         color="#000"
                      />
                   </TouchableOpacity>
+
+                  {/* Modal title and info */}
                   <Text style={COMMONSTYLES.modalTitle}>Add Achievement</Text>
                   <Text style={COMMONSTYLES.modalInfo}>
                      Add your achievements here!
                   </Text>
+
+                  {/* Input box */}
                   <TextInput
                      style={COMMONSTYLES.modalInput}
                      placeholder="Enter your achievement here ..."
@@ -152,6 +171,8 @@ export default function Achievements() {
                      value={newAchievementText}
                      onChangeText={setNewAchievementText} // Update the state with the new value
                   />
+
+                  {/* Submit button */}
                   <TouchableOpacity
                      style={COMMONSTYLES.submitButton}
                      onPress={addAchievement}
@@ -163,31 +184,11 @@ export default function Achievements() {
                </View>
             </View>
          </Modal>
-         <Modal visible={editModalVisible} transparent animationType="fade">
-            <View style={styles.addModalContainer}>
-               <View style={styles.addModalContent}>
-                  <TouchableOpacity style={COMMONSTYLES.closeButton}>
-                     <MaterialCommunityIcons
-                        name="close"
-                        size={20}
-                        color="#000"
-                     />
-                  </TouchableOpacity>
-                  <Text style={COMMONSTYLES.modalTitle}>Edit Support</Text>
-                  <TextInput
-                     style={COMMONSTYLES.modalInput}
-                     placeholder="Enter your edited support here ..."
-                  />
-                  <TouchableOpacity style={COMMONSTYLES.submitButton}>
-                     <Text style={COMMONSTYLES.submitButtonText}>Save</Text>
-                  </TouchableOpacity>
-               </View>
-            </View>
-         </Modal>
       </View>
    );
 }
 
+// Achievement card component
 function Achievement({ text, timestamp }) {
    // Format the timestamp using date-fns library
    const formattedDate = timestamp
@@ -197,10 +198,11 @@ function Achievement({ text, timestamp }) {
       ? format(new Date(timestamp), "hh:mm a")
       : "";
 
+   // Draw card
    return (
       <View style={listItemStyles.listItemContainer}>
          <Text style={listItemStyles.achievementText}>{text}</Text>
-         <View style={listItemStyles.whenCompletedContainer}>
+         <View style={listItemStyles.timeAndDateCompletedContainer}>
             <Text style={listItemStyles.dateText}>{formattedDate}</Text>
             <Text style={listItemStyles.timeText}>{formattedTime}</Text>
          </View>
@@ -208,6 +210,7 @@ function Achievement({ text, timestamp }) {
    );
 }
 
+// Styles for list of achievements
 const listItemStyles = StyleSheet.create({
    listItemContainer: {
       flexDirection: "row",
@@ -229,7 +232,7 @@ const listItemStyles = StyleSheet.create({
       fontWeight: "bold",
       fontSize: 15,
    },
-   whenCompletedContainer: {
+   timeAndDateCompletedContainer: {
       textAlign: "right",
    },
    dateText: {
@@ -242,14 +245,9 @@ const listItemStyles = StyleSheet.create({
       fontWeight: "bold",
       fontSize: 12,
    },
-   goalItems: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      width: "80%",
-   },
 });
 
+// Main styles
 const styles = StyleSheet.create({
    bodyContainer: {
       flexGrow: 1,

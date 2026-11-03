@@ -15,6 +15,10 @@ const RecentAchievements = () => {
    const [achievements, setAchievements] = useState([]);
    const [isLoading, setIsLoading] = useState(false);
 
+   useEffect(() => {
+      getAchievements();
+   }, []);
+
    const fetchAchievements = async () => {
       let achievements = [];
       try {
@@ -42,23 +46,6 @@ const RecentAchievements = () => {
       setAchievements(recentAchievements);
       setIsLoading(false);
    };
-
-   useEffect(() => {
-      // Fetch achievements initially
-      getAchievements();
-
-      // TODO this no longer works with the SQLite database
-      //        // Set up real-time listener for achievements document
-      //        const unsubscribe = onSnapshot(achievementsRef, () => {
-      //            // When the document changes, fetch achievements again
-      //            getAchievements();
-      //        });
-
-      // Clean up the listener on component unmount
-      //        return () => {
-      //            unsubscribe();
-      //        };
-   }, []);
 
    return (
       <View style={raStyles.raContainer}>

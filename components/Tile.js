@@ -37,24 +37,24 @@ const Tile = ({ text, onPress, timestamp }) => {
 const tileStyles = StyleSheet.create({
    container: {
       justifyContent: "space-between",
-      backgroundColor: COLORS.lightModeBG,
-      padding: 10,
-      borderRadius: 3,
       marginVertical: 10,
+      padding: 10,
       height: 80,
       borderWidth: 1,
+      borderRadius: 3,
       borderStyle: "dotted",
       borderColor: "rgba(5,5,5,0.2)",
+      backgroundColor: COLORS.lightModeBG,
    },
    tileText: {
-      fontSize: 14,
-      fontWeight: "bold",
       width: "100%",
+      fontWeight: "bold",
+      fontSize: 14,
    },
    timestampText: {
+      textAlign: "center",
       fontSize: 12,
       color: "gray",
-      textAlign: "center",
    },
 });
 

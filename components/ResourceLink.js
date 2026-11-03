@@ -33,11 +33,11 @@ const ResourceLink = ({ name, description, website, phone, onPress }) => {
 
 const wideButtonStyles = StyleSheet.create({
    button: {
-      backgroundColor: "white",
+      justifyContent: "center",
+      marginVertical: 10,
       padding: 15,
       borderRadius: 5,
-      marginVertical: 10,
-      justifyContent: "center",
+      backgroundColor: "white",
       elevation: 5, // For Android shadow
       shadowColor: "#000", // For iOS shadow
       shadowOffset: { width: 2, height: 4 }, // For iOS shadow
@@ -45,16 +45,16 @@ const wideButtonStyles = StyleSheet.create({
       shadowRadius: 10,
    },
    buttonText: {
-      color: "black",
-      fontSize: 16,
-      fontWeight: "bold",
       marginBottom: 5,
+      fontWeight: "bold",
+      fontSize: 16,
+      color: "black",
    },
    buttonLink: {
-      color: COLORS.primaryColor,
-      fontSize: 15,
-      fontWeight: "bold",
       marginTop: 5,
+      fontWeight: "bold",
+      fontSize: 15,
+      color: COLORS.primaryColor,
    },
 });
 

@@ -43,9 +43,9 @@ const styles = StyleSheet.create({
    },
    buttonContianer: {
       flexDirection: "row",
-      marginTop: 0,
       alignItems: "center",
       justifyContent: "space-between",
+      marginTop: 0,
    },
    title: {
       fontWeight: "bold",

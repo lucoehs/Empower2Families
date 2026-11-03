@@ -41,13 +41,13 @@ export default function ListItem({ text, id, onDelete, onEdit }) {
 
 const listItemStyles = StyleSheet.create({
    container: {
-      backgroundColor: "white",
-      borderRadius: 5,
       flexDirection: "row",
-      justifyContent: "space-between",
       alignItems: "center",
-      padding: 20,
+      justifyContent: "space-between",
       marginVertical: 10,
+      padding: 20,
+      borderRadius: 5,
+      backgroundColor: "white",
       elevation: 5, // For Android shadow
       shadowColor: "#000", // For iOS shadow
       shadowOffset: { width: 2, height: 4 }, // For iOS shadow
@@ -55,16 +55,16 @@ const listItemStyles = StyleSheet.create({
       shadowRadius: 10,
    },
    buttonText: {
-      fontSize: 15,
-      fontWeight: "bold",
       width: "60%",
+      fontWeight: "bold",
+      fontSize: 15,
    },
    menu: {
       position: "absolute",
-      backgroundColor: "white",
-      right: -20,
       top: -80,
+      right: -20,
       padding: 10,
+      backgroundColor: "white",
       elevation: 5, // For Android shadow
       shadowColor: "#000", // For iOS shadow
       shadowOffset: { width: 2, height: 4 }, // For iOS shadow

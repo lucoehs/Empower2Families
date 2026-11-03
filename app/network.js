@@ -44,17 +44,17 @@ function formatPhoneNumber(phoneNumber) {
 }
 
 export default function Network() {
-   // get database
+   // Get database
    const database = useSQLiteContext();
 
-   // UI variables
+   // Toggle variables
    const [isLoading, setIsLoading] = useState(true);
    const [isContactsListModalVisible, setContactsListModalVisible] =
       useState(false);
    const [isAddModalVisible, setAddModalVisible] = useState(false);
    const [isMessageModalVisible, setMessageModalVisible] = useState(false);
 
-   // Database variables
+   // Data variables
    const [contacts, setContacts] = useState([]);
    const [filteredContacts, setFilteredContacts] = useState([]);
    const [network, setNetwork] = useState([]);
@@ -66,10 +66,14 @@ export default function Network() {
 
    // Output variables
    const emptyAlert =
-      "You don’t have any supports added yet, click the blue plus sign to add one!";
-   const [tierInfo, setTierInfo] = useState("\"Immediate\" contacts are people closest to you and your child(ren). Ex. Family, school, daycare, etc.");
+      "You don’t have any contacts added yet, click the blue plus sign to add one!";
+   const [tierInfo, setTierInfo] = useState(
+      '"Immediate" contacts are people closest to you and your child(ren). Ex. Family, school, daycare, etc.',
+   );
 
+   // Effects
    useEffect(() => {
+      // get contacts from user's phone and add it to contacts array
       (async () => {
          const { status } = await requestPermissionsAsync();
          if (status === "granted") {
@@ -83,11 +87,11 @@ export default function Network() {
                   name: contact.fullName,
                   phones: contact.phones
                      ? contact.phones.map((phone) => ({
-                        ...phone,
-                        number: formatPhoneNumber(
-                           phone.number.replace(/^\+?1?/, ""),
-                        ), // Remove +1 country code and leading 1
-                     }))
+                          ...phone,
+                          number: formatPhoneNumber(
+                             phone.number.replace(/^\+?1?/, ""),
+                          ), // Remove +1 country code and leading 1
+                       }))
                      : [],
                }));
                setContacts(formattedContacts);
@@ -99,6 +103,7 @@ export default function Network() {
       })();
    }, []);
 
+   // allows search bar to work when adding contacts
    useEffect(() => {
       const filtered = contacts.filter((contact) =>
          contact.fullName.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -107,30 +112,17 @@ export default function Network() {
       syncNetwork();
    }, [searchQuery]);
 
-   const changeTierInfo = (selectedTier) => {
-      switch (selectedTier) {
-         case 1: // Selected tier = Immediate
-            setTierInfo("\"Immediate\" contacts are people closest to you and your child(ren). Ex. Family, school, daycare, etc.");
-            break;
-         case 2: // Selected tier = Natural
-            setTierInfo("\"Natural\" contacts are people who see your child(ren) at least once a week. Ex. Therapist, church, playgroup, etc.");
-            break;
-         case 3: // Selected tier = Interest
-            setTierInfo("\"Interest\" contacts are people who see your child(ren) once a month or so. Ex. Physician, parent support group, etc.");
-            break;
-         case 4: // Selected tier = Community
-            setTierInfo("\"Community\" contacts are other people in your life who provide support and/or guidance.");
-            break;
-         default:
-            setTierInfo("error");
-      }
-   };
+   // Event handlers
    const toggleContactsListModal = () => {
       setContactsListModalVisible(!isContactsListModalVisible);
    };
 
    const toggleAddModal = () => {
       setAddModalVisible(!isAddModalVisible);
+   };
+
+   const toggleMessageModal = () => {
+      setMessageModalVisible(!isMessageModalVisible);
    };
 
    const syncNetwork = async () => {
@@ -145,6 +137,35 @@ export default function Network() {
       );
    };
 
+   // Change tip given when user changes tier picked when adding a contact to the list
+   const changeTierInfo = (selectedTier) => {
+      switch (selectedTier) {
+         case 1: // Selected tier = Immediate
+            setTierInfo(
+               '"Immediate" contacts are people closest to you and your child(ren). Ex. Family, school, daycare, etc.',
+            );
+            break;
+         case 2: // Selected tier = Natural
+            setTierInfo(
+               '"Natural" contacts are people who see your child(ren) at least once a week. Ex. Therapist, church, playgroup, etc.',
+            );
+            break;
+         case 3: // Selected tier = Interest
+            setTierInfo(
+               '"Interest" contacts are people who see your child(ren) once a month or so. Ex. Physician, parent support group, etc.',
+            );
+            break;
+         case 4: // Selected tier = Community
+            setTierInfo(
+               '"Community" contacts are other people in your life who provide support and/or guidance.',
+            );
+            break;
+         default:
+            setTierInfo("error");
+      }
+   };
+
+   // Get info for contact to add and call function to add it to the database
    const addContactToNetwork = async () => {
       const name = selectedContact.name;
       const phone =
@@ -159,39 +180,40 @@ export default function Network() {
       await syncNetwork();
    };
 
-   // called when delete button is pressed on a Contact Card
+   // select contact to delete and call function to delete it from the database
    const deleteContact = async (contact_id) => {
       try {
-         await deleteContactFromDatabase(
-            database,
-            contact_id
-         );
+         await deleteContactFromDatabase(database, contact_id);
          await syncNetwork();
       } catch (error) {
          console.log(error);
       }
    };
 
-   // was marked as not being used anywhere, everything seems to work fine, so I don't know
-   // exactly what this is for
-   // const getContacts = async () => {
-   //    setIsLoading(true);
-   //    try {
-   //       let phone =
-   //          selectedContact.phones.length > 0
-   //             ? selectedContact.phones[0].number
-   //             : "No Phone Number";
-   //       await addContactToDatabase(database, selectedContact.name, phone, selectedTier);
-   //       setSelectedContact(null);
-   //       setSelectedTier(1);
-   //       toggleAddModal();
-   //       await syncNetwork();
-   //    } catch (error) {
-   //       console.error("Error fetching network document:", error);
-   //    } finally {
-   //       setIsLoading(false);
-   //    }
-   // };
+   // syncs added contacts with database?
+   const syncContacts = async () => {
+      setIsLoading(true);
+      try {
+         let phone =
+            selectedContact.phones.length > 0
+               ? selectedContact.phones[0].number
+               : "No Phone Number";
+         await addContactToDatabase(
+            database,
+            selectedContact.name,
+            phone,
+            selectedTier,
+         );
+         setSelectedContact(null);
+         setSelectedTier(1);
+         toggleAddModal();
+         await syncNetwork();
+      } catch (error) {
+         console.error("Error fetching network document:", error);
+      } finally {
+         setIsLoading(false);
+      }
+   };
 
    async function addContactToDatabase(db, name, phone, level) {
       if (name === null || name === "") {
@@ -216,50 +238,60 @@ export default function Network() {
       }
    }
 
+   // delete contact from database
    async function deleteContactFromDatabase(db, contact_id) {
-      console.log("Preparing result...");
+      // make sure contact is in the database [it really should be, just double checking]
       const result = await db.getFirstAsync(
-         "DELETE FROM contacts WHERE contact_id = ?;",
+         "SELECT * FROM contacts WHERE contact_id = ?;",
          contact_id,
       );
-      console.log("Successful result");
-      console.log("Result: " + result);
 
-      if (result === null) {
-         return db.runAsync("DELETE FROM CONTACTS WHERE contact_id = ?;", contact_id);
+      // if the contact is in the database delete it
+      if (result != null) {
+         return db.runAsync(
+            "DELETE FROM CONTACTS WHERE contact_id = ?;",
+            contact_id,
+         );
       }
    }
 
+   // Draw screen
    return (
+      // Holds all content below the header
       <View style={styles.bodyContainer}>
-         {/* How the main content will appear */}
+         {/* Allows content to be scrollable */}
          <ScrollView style={styles.scrollContainer}>
+            {/* Holds contacts list content */}
             <View style={styles.mainContentContainer}>
+               {/* Page title */}
                <Text style={COMMONSTYLES.pageTitle}>My Network</Text>
-
-               {/* Display contacts in network, if there none display the empty message */}
+               {/* Display contacts in network, if there are none display the empty message */}
                {network.length === 0 ? (
                   <View style={COMMONSTYLES.emptyAlertContainer}>
                      <Text style={COMMONSTYLES.emptyAlert}>{emptyAlert}</Text>
                   </View>
                ) : (
+                  // Filter contacts by tier
                   Array.from({ length: 4 }, (_, index) => {
                      const levelContacts = network.filter(
                         (contact) => contact.level === index + 1,
                      );
+                     // Display tiers
                      return levelContacts.length > 0 ? (
                         <View key={index}>
                            <Text style={styles.tierHeader}>
                               {index === 0
                                  ? "Immediate"
                                  : index === 1
-                                    ? "Natural"
-                                    : index === 2
-                                       ? "Interest"
-                                       : "Community"}
+                                   ? "Natural"
+                                   : index === 2
+                                     ? "Interest"
+                                     : "Community"}
                            </Text>
 
                            {levelContacts.map((contact) => (
+                              // this whole next part can probably be adapted into it's own
+                              // component like the other pages do
                               <View
                                  key={contact.contact_id}
                                  style={[
@@ -276,7 +308,7 @@ export default function Network() {
                                     <Text style={{ width: 225 }}>
                                        {contact.name} {contact.phone}
                                     </Text>
-
+                                    {/* Delete button */}
                                     <TouchableOpacity
                                        onPress={() => {
                                           setSelectedContact(contact);
@@ -303,11 +335,7 @@ export default function Network() {
          </ScrollView>
 
          {/* Opens the new message modal */}
-         <NewMessageButton
-            onPress={() => {
-               alert("message");
-            }}
-         />
+         <NewMessageButton onPress={toggleMessageModal} />
 
          {/* Opens the contact list modal */}
          <AddButton onPress={toggleContactsListModal} />
@@ -320,6 +348,7 @@ export default function Network() {
          >
             <View style={styles.contactsModalContainer}>
                <View style={styles.contactsModalContent}>
+                  {/* Close button */}
                   <TouchableOpacity
                      style={COMMONSTYLES.closeButton}
                      onPress={toggleContactsListModal}
@@ -331,6 +360,7 @@ export default function Network() {
                      />
                   </TouchableOpacity>
 
+                  {/* Title */}
                   <Text style={COMMONSTYLES.modalTitle}>Add Contact</Text>
 
                   {/* search bar for contact list */}
@@ -350,11 +380,10 @@ export default function Network() {
                            name={contact.name}
                            phone={
                               contact.phones && contact.phones.length > 0
-                                 ?
-                                 contact.phones[0].number
+                                 ? contact.phones[0].number
                                  : "No Phone Number"
                            }
-                           // when contact is selected:
+                           // when contact is selected open the add modal
                            onPress={() => {
                               setSelectedContact(contact);
                               toggleContactsListModal();
@@ -371,6 +400,7 @@ export default function Network() {
          <Modal visible={isAddModalVisible} transparent animationType="fade">
             <View style={styles.addModalContainer}>
                <View style={styles.addModalContent}>
+                  {/* Close button */}
                   <TouchableOpacity
                      style={COMMONSTYLES.closeButton}
                      onPress={toggleAddModal}
@@ -382,8 +412,10 @@ export default function Network() {
                      />
                   </TouchableOpacity>
 
+                  {/* Title */}
                   <Text style={COMMONSTYLES.modalTitle}>Add Contact</Text>
 
+                  {/* Info of selected contact */}
                   {selectedContact ? (
                      <View style={styles.selectedContactInfo}>
                         <Text style={styles.selectedContactName}>
@@ -391,21 +423,24 @@ export default function Network() {
                         </Text>
                         <Text style={styles.selectedContactNumber}>
                            {selectedContact.phones &&
-                              selectedContact.phones.length > 0
+                           selectedContact.phones.length > 0
                               ? formatPhoneNumber(
-                                 selectedContact.phones[0].number,
-                              )
+                                   selectedContact.phones[0].number,
+                                )
                               : "No Phone Number"}
                         </Text>
                      </View>
                   ) : null}
 
+                  {/* Tier selection */}
                   <Text style={styles.tierText}>Set Tier</Text>
-
                   <Picker
                      style={styles.tierSelecter}
                      selectedValue={selectedTier}
-                     onValueChange={(itemValue) => { setSelectedTier(itemValue); changeTierInfo(itemValue); }}
+                     onValueChange={(itemValue) => {
+                        setSelectedTier(itemValue);
+                        changeTierInfo(itemValue);
+                     }}
                   >
                      <Picker.Item label="Immediate" value={1} />
                      <Picker.Item label="Natural" value={2} />
@@ -413,8 +448,12 @@ export default function Network() {
                      <Picker.Item label="Community" value={4} />
                   </Picker>
 
-                  <Text style={{ ...COMMONSTYLES.modalInfo, marginBottom: 0 }} >{tierInfo}</Text>
+                  {/* Info about currently selected tier */}
+                  <Text style={{ ...COMMONSTYLES.modalInfo, marginBottom: 0 }}>
+                     {tierInfo}
+                  </Text>
 
+                  {/* Submit button */}
                   <TouchableOpacity
                      style={COMMONSTYLES.submitButton}
                      onPress={addContactToNetwork}
@@ -426,14 +465,87 @@ export default function Network() {
                </View>
             </View>
          </Modal>
+
+         {/* How the new message modal will appear */}
+         <Modal
+            visible={isMessageModalVisible}
+            transparent
+            animationType="fade"
+         >
+            <View style={styles.addModalContainer}>
+               <View style={styles.addModalContent}>
+                  {/* Close button */}
+                  <TouchableOpacity
+                     style={COMMONSTYLES.closeButton}
+                     onPress={toggleMessageModal}
+                  >
+                     <MaterialCommunityIcons
+                        name="close"
+                        size={20}
+                        color="#000"
+                     />
+                  </TouchableOpacity>
+
+                  {/* Title */}
+                  <Text style={COMMONSTYLES.modalTitle}>Create Summary</Text>
+
+                  {/* Info of selected contact */}
+                  {/* {selectedContact ? (
+                     <View style={styles.selectedContactInfo}>
+                        <Text style={styles.selectedContactName}>
+                           {selectedContact.fullName}
+                        </Text>
+                        <Text style={styles.selectedContactNumber}>
+                           {selectedContact.phones &&
+                           selectedContact.phones.length > 0
+                              ? formatPhoneNumber(
+                                   selectedContact.phones[0].number,
+                                )
+                              : "No Phone Number"}
+                        </Text>
+                     </View>
+                  ) : null} */}
+
+                  {/* Recipient selection */}
+                  <Text style={styles.tierText}>Select Contact To Send To</Text>
+                  {/* <Picker
+                     style={styles.tierSelecter}
+                     selectedValue={selectedTier}
+                     onValueChange={(itemValue) => {
+                        setSelectedTier(itemValue);
+                        changeTierInfo(itemValue);
+                     }}
+                  >
+                     <Picker.Item label="Immediate" value={1} />
+                     <Picker.Item label="Natural" value={2} />
+                     <Picker.Item label="Interest" value={3} />
+                     <Picker.Item label="Community" value={4} />
+                  </Picker> */}
+
+                  {/* Submit button */}
+                  <TouchableOpacity
+                     style={COMMONSTYLES.submitButton}
+                     onPress={addContactToNetwork}
+                  >
+                     <Text style={COMMONSTYLES.submitButtonText}>
+                        Create Summary
+                     </Text>
+                  </TouchableOpacity>
+               </View>
+            </View>
+         </Modal>
       </View>
    );
 }
 
+// New message button component
 function NewMessageButton({ onPress }) {
    return (
-      <View style={styles.messageButtonContainer}>
-         <TouchableOpacity style={styles.messageButton} onPress={onPress}>
+      <View style={messageStyles.messageButtonContainer}>
+         <TouchableOpacity
+            style={messageStyles.messageButton}
+            onPress={onPress}
+         >
             <MaterialCommunityIcons
                name="message-outline"
                size={30}
@@ -444,6 +556,7 @@ function NewMessageButton({ onPress }) {
    );
 }
 
+// Displays a contact on the user's phone
 function ContactOnPhone({ name, phone, onPress }) {
    return (
       <TouchableOpacity onPress={onPress}>
@@ -481,6 +594,53 @@ const contactStyles = StyleSheet.create({
    },
 });
 
+// Message modal styles
+const messageStyles = StyleSheet.create({
+   messageModalContainer: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
+   },
+   messageInput: {
+      marginBottom: 20,
+      height: 150,
+      padding: 10,
+      width: "90%",
+      textAlign: "left",
+      textAlignVertical: "top",
+      borderWidth: 1,
+      borderRadius: 10,
+      borderColor: COLORS.primaryColor,
+   },
+   messageModalContent: {
+      alignItems: "center",
+      justifyContent: "space-between",
+      padding: 40,
+      width: "90%",
+      borderRadius: 10,
+      backgroundColor: "white",
+   },
+   messageButtonContainer: {
+      position: "absolute",
+      left: 20,
+      bottom: 60,
+   },
+   messageButton: {
+      alignItems: "center",
+      justifyContent: "center",
+      height: 60,
+      width: 60,
+      borderRadius: 30,
+      backgroundColor: COLORS.primaryColor,
+      elevation: 5, // For Android shadow
+      shadowColor: "#000", // For iOS shadow
+      shadowOffset: { width: 0, height: 2 }, // For iOS shadow
+      shadowOpacity: 0.8, // For iOS shadow
+   },
+});
+
+// Main styles
 const styles = StyleSheet.create({
    scrollContainer: {
       flexGrow: 1,
@@ -566,7 +726,7 @@ const styles = StyleSheet.create({
       width: "90%",
       borderRadius: 20,
       borderWidth: 2,
-      borderColor: 'black',
+      borderColor: "black",
       backgroundColor: COLORS.primaryColor.toString() + "50", // adds opacity to primary color
    },
    selectedContactName: {
@@ -576,48 +736,6 @@ const styles = StyleSheet.create({
    },
    selectedContactNumber: {
       fontStyle: "italic",
-   },
-   messageModalContainer: {
-      flex: 1,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: "rgba(0, 0, 0, 0.5)",
-   },
-   messageInput: {
-      marginBottom: 20,
-      height: 150,
-      padding: 10,
-      width: "90%",
-      textAlign: "left",
-      textAlignVertical: "top",
-      borderWidth: 1,
-      borderRadius: 10,
-      borderColor: COLORS.primaryColor,
-   },
-   messageModalContent: {
-      alignItems: "center",
-      justifyContent: "space-between",
-      padding: 40,
-      width: "90%",
-      borderRadius: 10,
-      backgroundColor: "white",
-   },
-   messageButtonContainer: {
-      position: "absolute",
-      left: 20,
-      bottom: 60,
-   },
-   messageButton: {
-      alignItems: "center",
-      justifyContent: "center",
-      height: 60,
-      width: 60,
-      borderRadius: 30,
-      backgroundColor: COLORS.primaryColor,
-      elevation: 5, // For Android shadow
-      shadowColor: "#000", // For iOS shadow
-      shadowOffset: { width: 0, height: 2 }, // For iOS shadow
-      shadowOpacity: 0.8, // For iOS shadow
    },
    menuContainer: {
       flexDirection: "row",

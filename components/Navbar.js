@@ -46,21 +46,21 @@ function getGreeting() {
 const navStyles = StyleSheet.create({
    navbarContainer: {
       flexDirection: "row",
-      justifyContent: "space-between",
       alignItems: "center",
-      paddingHorizontal: 40,
-      paddingBottom: 20,
-      paddingTop: 60,
+      justifyContent: "space-between",
       margin: 10,
+      paddingTop: 60,
+      paddingBottom: 20,
+      paddingHorizontal: 40,
       backgroundColor: COLORS.lightModeBG,
    },
    logo: {
-      fontSize: 24,
       fontStyle: "italic",
       fontWeight: "bold",
+      fontSize: 24,
    },
    image: {
-      width: 100,
       height: 55,
+      width: 100,
    },
 });

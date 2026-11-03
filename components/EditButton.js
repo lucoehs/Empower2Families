@@ -23,16 +23,16 @@ export default function EditButton({ onPress }) {
 const styles = StyleSheet.create({
    container: {
       position: "absolute",
-      bottom: 60, // Adjust as needed
-      right: 20, // Adjust as needed
+      right: 20,
+      bottom: 60,
    },
    button: {
-      width: 60,
-      height: 60,
-      borderRadius: 30,
-      backgroundColor: COLORS.primaryColor,
       alignItems: "center",
       justifyContent: "center",
+      height: 60,
+      width: 60,
+      borderRadius: 30,
+      backgroundColor: COLORS.primaryColor,
       elevation: 5, // For Android shadow
       shadowColor: "#000", // For iOS shadow
       shadowOffset: { width: 0, height: 2 }, // For iOS shadow

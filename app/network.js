@@ -24,6 +24,7 @@ import {
    MenuOptions,
    MenuTrigger,
 } from "react-native-popup-menu";
+//import { printAsync } from "expo-print";
 
 // internal imports
 import { addContact } from "@/data/User";
@@ -255,6 +256,17 @@ export default function Network() {
       }
    }
 
+   // async function printTest()
+   // {
+   //    const html = `
+   //        <html>
+   //          <text>Skibidi</text>
+   //        </html>
+   //      `;
+
+   //    await printAsync({ html });
+   // }
+
    // Draw screen
    return (
       // Holds all content below the header
@@ -335,7 +347,7 @@ export default function Network() {
          </ScrollView>
 
          {/* Opens the new message modal */}
-         <NewMessageButton onPress={toggleMessageModal} />
+         {/* <NewMessageButton onPress={printTest} /> */}
 
          {/* Opens the contact list modal */}
          <AddButton onPress={toggleContactsListModal} />
@@ -369,7 +381,7 @@ export default function Network() {
                      placeholder="Search by name..."
                      placeholderTextColor={COLORS.placeholderText}
                      value={searchQuery}
-                     onChangeText={(text) => setSearchQuery(text)}
+                     onChangeName={(text) => setSearchQuery(text)}
                   />
 
                   {/* how each contact in the list will appear */}

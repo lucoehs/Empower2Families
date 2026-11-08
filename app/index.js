@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
       width: "auto",
    },
    mainContentContainer: {
-      flex: 1,
+      flexGrow: 1,
       flexDirection: "column",
       paddingTop: 10,
       paddingBottom: 40,

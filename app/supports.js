@@ -183,9 +183,9 @@ const Supports = () => {
                   supports.map((support) => (
                      <ListItem
                         key={support.support_id}
+                        stressor_id={support.support_id}
                         text={support.text}
                         onDelete={deleteSupport}
-                        stressor_id={support.support_id}
                         onEdit={editSupport}
                      />
                   ))

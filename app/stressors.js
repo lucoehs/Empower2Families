@@ -35,7 +35,7 @@ export default function Stressors() {
    const [stressors, setStressors] = useState([]);
 
    // Input variables
-   const [editingStressorId, setEditingStressorsId] = useState(null);
+   const [editingStressorsId, setEditingStressorsId] = useState(null);
    const [editedStressorsText, setEditedStressorsText] = useState("");
    const [stressorText, setStressorText] = useState("");
 
@@ -154,7 +154,7 @@ export default function Stressors() {
             await database.runAsync(
                "UPDATE stressors SET text = ? WHERE stressor_id = ?;",
                editedStressorsText,
-               editingStressorId,
+               editingStressorsId,
             );
 
             // Close the edit modal
@@ -190,6 +190,7 @@ export default function Stressors() {
                ) : (
                   stressors.map((stressor) => (
                      <ListItem
+                        key={stressor.stressor_id}
                         text={stressor.text}
                         stressor_id={stressor.stressor_id}
                         onDelete={deleteStressor}

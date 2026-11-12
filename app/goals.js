@@ -4,6 +4,7 @@
 // external imports
 import React, { useEffect, useState } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Picker } from "@react-native-picker/picker";
 import { useSQLiteContext } from "expo-sqlite";
 import {
    ActivityIndicator,
@@ -38,11 +39,14 @@ export default function Goals() {
 
    // Data variables
    const [goals, setGoals] = useState([]);
+   const [children, setChildren] = useState([]);
 
    // Input variables
    const [goalText, setGoalText] = useState("");
+   const [goalChild, setGoalChild] = useState("");
    const [editingGoalId, setEditingGoalId] = useState(null);
    const [editedGoalText, setEditedGoalText] = useState("");
+   const [editedGoalChild, setEditedGoalChild] = useState(null);
 
    // Output variables
    const [errorMessage, setErrorMessage] = useState("");
@@ -54,20 +58,26 @@ export default function Goals() {
       syncGoals();
    }, []);
 
+   useEffect(() => {
+      getChildren();
+   }, []);
+
    // Event handlers
    const toggleAddModal = () => {
       setAddModalVisible(!isAddModalVisible);
    };
 
-   const openEditModal = (goal_id, text) => {
-      setEditedGoalText(text);
+   const openEditModal = (goal_id, text, child_id) => {
       setEditingGoalId(goal_id);
+      setEditedGoalText(text);
+      setEditedGoalChild(child_id);
       setEditModalVisible(true);
    };
 
    const closeEditModal = () => {
-      setEditedGoalText("");
       setEditingGoalId(null);
+      setEditedGoalText("");
+      setEditedGoalChild(null);
       setEditModalVisible(false);
    };
 
@@ -77,10 +87,11 @@ export default function Goals() {
          // Trim whitespaces and make sure goalText is not empty
          if (goalText.trim().length > 0) {
             await database.runAsync(
-               "INSERT INTO goals (text, date, met) VALUES (?, ?, ?);",
+               "INSERT INTO goals (text, date, met, child_id) VALUES (?, ?, ?, ?);",
                goalText,
                Date.now(),
                false,
+               goalChild
             );
             toggleAddModal();
             syncGoals();
@@ -107,11 +118,30 @@ export default function Goals() {
                   goal_id: goal.goal_id,
                   text: goal.text,
                   met: goal.met ? "T" : "F",
+                  child: goal.child_id
                })),
             );
          });
       } catch (error) {
          console.error("Error fetching goals document:", error);
+      } finally {
+         setIsLoading(false);
+      }
+   };
+
+   const getChildren = async () => {
+      setIsLoading(true);
+      try {
+         database.getAllAsync("SELECT * FROM children;").then((children) => {
+            setChildren(
+               children.map((child) => ({
+                  child_id: child.child_id,
+                  name: child.name,
+               })),
+            );
+         });
+      } catch (error) {
+         console.error("Error fetching children document:", error);
       } finally {
          setIsLoading(false);
       }
@@ -139,7 +169,7 @@ export default function Goals() {
             .getFirstAsync("SELECT * FROM goals WHERE goal_id = ?", goal_id)
             .then(
                async (goal) => {
-                  await openEditModal(goal_id, goal.text);
+                  await openEditModal(goal_id, goal.text, goal.child_id);
                },
                (reason) => console.warn(reason),
             );
@@ -154,8 +184,9 @@ export default function Goals() {
          if (editedGoalText !== undefined && editedGoalText.trim() !== "") {
             // Update the goal with the specified id
             await database.runAsync(
-               "UPDATE goals SET text = ? WHERE goal_id = ?;",
+               "UPDATE goals SET text = ?, child_id = ? WHERE goal_id = ?;",
                editedGoalText,
+               editedGoalChild,
                editingGoalId,
             );
             await database.runAsync(
@@ -254,16 +285,17 @@ export default function Goals() {
                   <ActivityIndicator size="large" color={COLORS.primaryColor} />
                ) : goals.length === 0 ? (
                   // Display an empty message if there are no goals added
-                  <View style={COMMONSTYLES.emptyAlertContainer}>
-                     <Text style={COMMONSTYLES.emptyAlert}>{emptyAlert}</Text>
+                  <View style={COMMONSTYLES.alertContainer}>
+                     <Text style={COMMONSTYLES.alert}>{emptyAlert}</Text>
                   </View>
                ) : (
                   // Display goals
                   goals.map((goal) => (
-                     <Goal
+                     <GoalItem
                         key={goal.goal_id}
                         goal_id={goal.goal_id}
                         text={goal.text}
+                        child_id={goal.child_id}
                         met={goal.met}
                         onDelete={deleteGoal}
                         onEdit={editGoal}
@@ -309,6 +341,44 @@ export default function Goals() {
                      placeholderTextColor={COLORS.placeholderText}
                      onChangeText={(text) => setGoalText(text)}
                   />
+
+                  {/* Choose child to assign goal to */}
+                  {isLoading ? (
+                     <ActivityIndicator
+                        size="large"
+                        color={COLORS.primaryColor}
+                     />
+                  ) : children.length === 0 ? (
+                     <Picker
+                        style={styles.tierSelecter}
+                        selectedValue={goalChild}
+                        onValueChange={(itemValue) => {
+                           setGoalChild(itemValue);
+                        }}
+                     >
+                        <Picker.Item label={"No children added"} value={null} />
+                     </Picker>
+                  ) : (
+                     <Picker
+                        style={styles.tierSelecter}
+                        selectedValue={goalChild}
+                        onValueChange={(itemValue) => {
+                           setGoalChild(itemValue);
+                        }}
+                     >
+                        <Picker.Item
+                           label={"Assign to child (optional)"}
+                           value={null}
+                        />
+                        {children.map((child) => (
+                           <Picker.Item
+                              label={child.child_name}
+                              value={child.child_id}
+                           />
+                        ))}
+                     </Picker>
+                  )}
+
                   {/* Submit button */}
                   <TouchableOpacity
                      style={COMMONSTYLES.submitButton}
@@ -343,8 +413,48 @@ export default function Goals() {
                      placeholder="Enter your edited goal here ..."
                      placeholderTextColor={COLORS.placeholderText}
                      onChangeText={(text) => setEditedGoalText(text)}
-                     value={editedGoalText}
+                     // value={editedGoalText}
                   />
+
+                  {/* Change child to assign goal to */}
+                  <Text style={styles.tierText}>Edit Child</Text>
+
+                  {isLoading ? (
+                     <ActivityIndicator
+                        size="large"
+                        color={COLORS.primaryColor}
+                     />
+                  ) : children.length === 0 ? (
+                     <Picker
+                        style={styles.tierSelecter}
+                        selectedValue={editedGoalChild}
+                        onValueChange={(itemValue) => {
+                           setEditedGoalChild(itemValue);
+                        }}
+                     >
+                        <Picker.Item label={"No children added"} value={null} />
+                     </Picker>
+                  ) : (
+                     <Picker
+                        style={styles.tierSelecter}
+                        selectedValue={editedGoalChild}
+                        onValueChange={(itemValue) => {
+                           setEditedGoalChild(itemValue);
+                        }}
+                     >
+                        <Picker.Item
+                           label={"Assign to child (optional)"}
+                           value={null}
+                        />
+                        {children.map((child) => (
+                           <Picker.Item
+                              label={child.name}
+                              value={child.child_id}
+                           />
+                        ))}
+                     </Picker>
+                  )}
+
                   {/* Submit button */}
                   <TouchableOpacity
                      style={COMMONSTYLES.submitButton}
@@ -360,7 +470,7 @@ export default function Goals() {
 }
 
 // Goal display component
-function Goal({ text, met, goal_id, onDelete, onEdit, onMet, onNotMet }) {
+function GoalItem({ text, met, goal_id, child_id, onDelete, onEdit, onMet, onNotMet }) {
    return (
       <View style={listItemStyles.contentContainer}>
          <View style={listItemStyles.goalItems}>
@@ -469,6 +579,18 @@ const styles = StyleSheet.create({
       paddingBottom: 40,
       paddingHorizontal: 40,
       backgroundColor: "white",
+   },
+   tierSelecter: {
+      margin: 10,
+      height: 50,
+      width: 300,
+      color: "black",
+      backgroundColor: "#DDD",
+      dropdownIconColor: "black"
+   },
+   tierText: {
+      fontWeight: "bold",
+      fontSize: 20,
    },
    modalContainer: {
       flex: 1,

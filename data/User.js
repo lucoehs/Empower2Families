@@ -11,7 +11,9 @@ const migrations = [
         child_id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         bday TEXT,
-        bio TEXT
+        bio TEXT,
+        avatar TEXT,
+        color TEXT
       );
     `);
 
@@ -32,7 +34,7 @@ const migrations = [
         text TEXT NOT NULL,
         date INTEGER,
         goal_id INTEGER UNIQUE,
-        FOREIGN KEY (goal_id) REFERENCES GOALS(goal_id) ON DELETE SET NULL
+        FOREIGN KEY (goal_id) REFERENCES goals(goal_id) ON DELETE SET NULL
       );
     `);
 
@@ -58,7 +60,9 @@ const migrations = [
         goal_id INTEGER PRIMARY KEY AUTOINCREMENT,
         text TEXT NOT NULL,
         date INTEGER,
-        met INTEGER
+        met INTEGER,
+        child_id INTEGER UNIQUE,
+        FOREIGN KEY (child_id) REFERENCES children(child_id) ON DELETE SET NULL
       );
     `);
    },

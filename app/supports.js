@@ -35,6 +35,7 @@ const Supports = () => {
    const [supports, setSupports] = useState([]);
 
    // Input variables
+   const [editingSupportId, setEditingSupportId] = useState(null);
    const [editedSupportText, setEditedSupportText] = useState("");
    const [supportText, setSupportText] = useState("");
 
@@ -54,6 +55,7 @@ const Supports = () => {
    };
 
    const toggleEditModal = (support_id = null, text = "") => {
+      setEditingSupportId(support_id);
       setEditedSupportText(text);
       setEditModalVisible(!isEditModalVisible);
    };
@@ -176,14 +178,14 @@ const Supports = () => {
                {isLoading ? (
                   <ActivityIndicator size="large" color={COLORS.primaryColor} />
                ) : supports.length === 0 ? (
-                  <View style={COMMONSTYLES.emptyAlertContainer}>
-                     <Text style={COMMONSTYLES.emptyAlert}>{emptyAlert}</Text>
+                  <View style={COMMONSTYLES.alertContainer}>
+                     <Text style={COMMONSTYLES.alert}>{emptyAlert}</Text>
                   </View>
                ) : (
                   supports.map((support) => (
                      <ListItem
                         key={support.support_id}
-                        stressor_id={support.support_id}
+                        id={support.support_id}
                         text={support.text}
                         onDelete={deleteSupport}
                         onEdit={editSupport}

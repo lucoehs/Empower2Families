@@ -381,7 +381,7 @@ export default function Network() {
                      placeholder="Search by name..."
                      placeholderTextColor={COLORS.placeholderText}
                      value={searchQuery}
-                     onChangeName={(text) => setSearchQuery(text)}
+                     onChangeText={(text) => setSearchQuery(text)}
                   />
 
                   {/* how each contact in the list will appear */}

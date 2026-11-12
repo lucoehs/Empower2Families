@@ -184,15 +184,15 @@ export default function Stressors() {
                {isLoading ? (
                   <ActivityIndicator size="large" color={COLORS.primaryColor} />
                ) : stressors.length === 0 ? (
-                  <View style={COMMONSTYLES.emptyAlertContainer}>
-                     <Text style={COMMONSTYLES.emptyAlert}>{emptyAlert}</Text>
+                  <View style={COMMONSTYLES.alertContainer}>
+                     <Text style={COMMONSTYLES.alert}>{emptyAlert}</Text>
                   </View>
                ) : (
                   stressors.map((stressor) => (
                      <ListItem
                         key={stressor.stressor_id}
+                        id={stressor.stressor_id}
                         text={stressor.text}
-                        stressor_id={stressor.stressor_id}
                         onDelete={deleteStressor}
                         onEdit={editStressor}
                      />

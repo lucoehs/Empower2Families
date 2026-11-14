@@ -178,8 +178,8 @@ const Supports = () => {
                {isLoading ? (
                   <ActivityIndicator size="large" color={COLORS.primaryColor} />
                ) : supports.length === 0 ? (
-                  <View style={COMMONSTYLES.alertContainer}>
-                     <Text style={COMMONSTYLES.alert}>{emptyAlert}</Text>
+                  <View style={COMMONSTYLES.emptyAlertContainer}>
+                     <Text style={COMMONSTYLES.emptyAlert}>{emptyAlert}</Text>
                   </View>
                ) : (
                   supports.map((support) => (

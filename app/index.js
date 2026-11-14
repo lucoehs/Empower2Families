@@ -25,6 +25,7 @@ export default function Home() {
             <View style={styles.userContainer}>
                {/* <SignInButton/> */}
                <SmallNavButton text="Child Info" navTo="child-info" />
+               <SmallNavButton text="Statistics" navTo="statistics" />
             </View>
             <WideNavButton text="My Network" navTo="network" />
             <ButtonGrid text="Reflections" buttonInfo={reflectionButtons} />

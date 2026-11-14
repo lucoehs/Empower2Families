@@ -31,7 +31,6 @@ import { File, Directory, Paths } from "expo-file-system";
 import { COLORS } from "@/constants/Colors";
 import { COMMONSTYLES } from "@/constants/CommonStyles";
 import AddButton from "@/components/AddButton";
-import ListItem from "@/components/ListItem";
 
 export default function ChildInfo() {
    // Get database
@@ -254,7 +253,7 @@ export default function ChildInfo() {
       <View style={styles.bodyContainer}>
          {/* Allows the content to scroll */}
          <ScrollView style={styles.scrollContainer}>
-            {/* Holds stresors content */}
+            {/* Holds children content */}
             <View style={styles.mainContentContainer}>
                {/* Page title */}
                <Text style={COMMONSTYLES.pageTitle}>Children Info</Text>
@@ -262,8 +261,8 @@ export default function ChildInfo() {
                {isLoading ? (
                   <ActivityIndicator size="large" color={COLORS.primaryColor} />
                ) : children.length === 0 ? (
-                  <View style={COMMONSTYLES.alertContainer}>
-                     <Text style={COMMONSTYLES.alert}>{emptyAlert}</Text>
+                  <View style={COMMONSTYLES.emptyAlertContainer}>
+                     <Text style={COMMONSTYLES.emptyAlert}>{emptyAlert}</Text>
                   </View>
                ) : (
                   children.map((child) => (

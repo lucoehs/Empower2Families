@@ -176,7 +176,7 @@ export default function Stressors() {
       <View style={styles.bodyContainer}>
          {/* Allows the content to scroll */}
          <ScrollView style={styles.scrollContainer}>
-            {/* Holds stresors content */}
+            {/* Holds stressors content */}
             <View style={styles.mainContentContainer}>
                {/* Page title */}
                <Text style={COMMONSTYLES.pageTitle}>Stressors</Text>
@@ -184,8 +184,8 @@ export default function Stressors() {
                {isLoading ? (
                   <ActivityIndicator size="large" color={COLORS.primaryColor} />
                ) : stressors.length === 0 ? (
-                  <View style={COMMONSTYLES.alertContainer}>
-                     <Text style={COMMONSTYLES.alert}>{emptyAlert}</Text>
+                  <View style={COMMONSTYLES.emptyAlertContainer}>
+                     <Text style={COMMONSTYLES.emptyAlert}>{emptyAlert}</Text>
                   </View>
                ) : (
                   stressors.map((stressor) => (

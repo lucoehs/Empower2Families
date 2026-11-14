@@ -91,7 +91,7 @@ export default function Goals() {
                goalText,
                Date.now(),
                false,
-               goalChild
+               goalChild,
             );
             toggleAddModal();
             syncGoals();
@@ -118,7 +118,7 @@ export default function Goals() {
                   goal_id: goal.goal_id,
                   text: goal.text,
                   met: goal.met ? "T" : "F",
-                  child: goal.child_id
+                  child: goal.child_id,
                })),
             );
          });
@@ -285,8 +285,8 @@ export default function Goals() {
                   <ActivityIndicator size="large" color={COLORS.primaryColor} />
                ) : goals.length === 0 ? (
                   // Display an empty message if there are no goals added
-                  <View style={COMMONSTYLES.alertContainer}>
-                     <Text style={COMMONSTYLES.alert}>{emptyAlert}</Text>
+                  <View style={COMMONSTYLES.emptyAlertContainer}>
+                     <Text style={COMMONSTYLES.emptyAlert}>{emptyAlert}</Text>
                   </View>
                ) : (
                   // Display goals
@@ -470,7 +470,16 @@ export default function Goals() {
 }
 
 // Goal display component
-function GoalItem({ text, met, goal_id, child_id, onDelete, onEdit, onMet, onNotMet }) {
+function GoalItem({
+   text,
+   met,
+   goal_id,
+   child_id,
+   onDelete,
+   onEdit,
+   onMet,
+   onNotMet,
+}) {
    return (
       <View style={listItemStyles.contentContainer}>
          <View style={listItemStyles.goalItems}>
@@ -586,7 +595,7 @@ const styles = StyleSheet.create({
       width: 300,
       color: "black",
       backgroundColor: "#DDD",
-      dropdownIconColor: "black"
+      dropdownIconColor: "black",
    },
    tierText: {
       fontWeight: "bold",

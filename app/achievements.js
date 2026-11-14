@@ -116,8 +116,8 @@ export default function Achievements() {
                   <ActivityIndicator size="large" color={COLORS.primaryColor} />
                ) : // Display empty message if there are no achievements added
                achievements.length === 0 ? (
-                  <View style={COMMONSTYLES.alertContainer}>
-                     <Text style={COMMONSTYLES.alert}>{emptyAlert}</Text>
+                  <View style={COMMONSTYLES.emptyAlertContainer}>
+                     <Text style={COMMONSTYLES.emptyAlert}>{emptyAlert}</Text>
                   </View>
                ) : (
                   // Display achievements if there are acievements added
